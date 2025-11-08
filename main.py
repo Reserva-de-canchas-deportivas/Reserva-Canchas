@@ -1,5 +1,6 @@
 from fastapi import FastAPI
 from fastapi.responses import JSONResponse
+from app.config.routers import include_routers
 
 # Crear la instancia de FastAPI
 app = FastAPI(
@@ -7,6 +8,9 @@ app = FastAPI(
     description="API RESTful profesional",
     version="1.0.0"
 )
+
+# Incluir routers configurados
+include_routers(app)
 
 # Ruta raíz
 @app.get("/")
