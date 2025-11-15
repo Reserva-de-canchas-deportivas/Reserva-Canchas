@@ -10,15 +10,16 @@ app = FastAPI(
     version="1.0.0"
 )
 
-# Incluir routers configurados
+# Configurar SOAP primero
+setup_soap_services(app)
+
+# Incluir routers REST
 include_routers(app)
 
 # Ruta raíz
 @app.get("/")
 async def root():
-    """
-    Endpoint de bienvenida.
-    """
+    """Endpoint de bienvenida"""
     return {
         "message": "¡Bienvenido a mi API con FastAPI!",
         "status": "online",
@@ -28,39 +29,28 @@ async def root():
 # Endpoint con parámetros
 @app.get("/items/{item_id}")
 async def read_item(item_id: int, q: str = None):
-    """
-    Ejemplo con parámetros de ruta y query.
-    """
+    """Ejemplo con parámetros de ruta y query"""
     return {
         "item_id": item_id,
         "query": q
     }
 
-# Health check
+# Health check (SOLO UNA VEZ)
 @app.get("/health")
 async def health_check():
-    """
-    Verifica el estado del servidor.
-    """
-    return JSONResponse(
-        status_code=200,
-        content={"status": "healthy"}
-    )
-
-setup_soap_services(app)
-
-@app.get("/soap/info")
-async def soap_info():
-    """Información sobre servicios SOAP disponibles"""
-    return JSONResponse(content=get_soap_info())
-
-@app.get("/health")
-async def health():
+    """Verifica el estado del servidor"""
     return {
         "status": "healthy",
         "rest_enabled": True,
         "soap_enabled": True
     }
+
+# Información SOAP
+@app.get("/soap/info")
+async def soap_info():
+    """Información sobre servicios SOAP disponibles"""
+    return JSONResponse(content=get_soap_info())
+
 
 if __name__ == "__main__":
     import uvicorn
