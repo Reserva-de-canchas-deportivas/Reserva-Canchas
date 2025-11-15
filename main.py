@@ -1,6 +1,7 @@
 from fastapi import FastAPI
 from fastapi.responses import JSONResponse
 from app.config.routers import include_routers
+from app.soap.soap_config import setup_soap_services, get_soap_info
 
 # Crear la instancia de FastAPI
 app = FastAPI(
@@ -45,3 +46,22 @@ async def health_check():
         status_code=200,
         content={"status": "healthy"}
     )
+
+setup_soap_services(app)
+
+@app.get("/soap/info")
+async def soap_info():
+    """Información sobre servicios SOAP disponibles"""
+    return JSONResponse(content=get_soap_info())
+
+@app.get("/health")
+async def health():
+    return {
+        "status": "healthy",
+        "rest_enabled": True,
+        "soap_enabled": True
+    }
+
+if __name__ == "__main__":
+    import uvicorn
+    uvicorn.run("main:app", host="0.0.0.0", port=8000, reload=True)
