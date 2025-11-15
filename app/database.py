@@ -2,9 +2,9 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker, Session
 from sqlalchemy.pool import StaticPool
 
-from app.domain.user_model import Base  # type: ignore
-# 🆕 Importar modelo de Sede para que SQLAlchemy lo registre
-from app.models.sede import Sede  # type: ignore
+from app.domain.user_model import Base  
+from app.models.sede import Sede  
+from app.models.cancha import Cancha
 
 # In-memory SQLite shared across threads for temporary data
 DATABASE_URL = "sqlite://"
