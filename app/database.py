@@ -6,6 +6,7 @@ from app.domain.user_model import Base
 from app.models.sede import Sede  
 from app.models.cancha import Cancha
 from app.models.tarifario import Tarifario 
+from app.models.reserva import Reserva
 
 # In-memory SQLite shared across threads for temporary data
 DATABASE_URL = "sqlite://"
