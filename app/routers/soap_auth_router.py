@@ -67,7 +67,7 @@ async def get_auth_wsdl():
             <input><soap:body use="literal"/></input>
             <output><soap:body use="literal"/></output>
         </operation>
-    </binding>
+    # </binding>
     
     <service name="AuthService">
         <port name="AuthServicePort" binding="tns:AuthServiceBinding">
