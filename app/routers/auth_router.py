@@ -1,12 +1,13 @@
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from sqlalchemy.orm import Session
 
 from app.database import get_db
 from app.repository.user_repository import seed_users
+from app.repository.api_key_repository import seed_api_keys
 from app.schemas.auth import LoginRequest, ApiResponse, TokensData
 from app.services import auth_service
-from app.domain.user_model import Usuario
+from app.services.security_responses import forbidden_error, unauthorized_error
 
 
 router = APIRouter(prefix="/api/v1/auth", tags=["auth"])
@@ -19,16 +20,17 @@ def on_startup_seed():
     init_db(create_all=True)
     with SessionLocal() as db:
         seed_users(db)
+        seed_api_keys(db)
 
 
 @router.post("/login", response_model=ApiResponse)
 def login(payload: LoginRequest, db: Session = Depends(get_db)):
     user = auth_service.authenticate_user(db, payload.correo, payload.telefono, payload.contrasena)
     if not user:
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid Credentials")
+        raise unauthorized_error("Credenciales inválidas", code="INVALID_CREDENTIALS")
 
     if user.estado == "bloqueado":
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="USUARIO_BLOQUEADO")
+        raise forbidden_error("Usuario bloqueado", code="USER_BLOCKED")
 
     access_token, refresh_token, exp_s = auth_service.issue_tokens_for_user(user)
     return ApiResponse(
@@ -41,7 +43,7 @@ def login(payload: LoginRequest, db: Session = Depends(get_db)):
 @router.post("/refresh", response_model=ApiResponse)
 def refresh(credentials: HTTPAuthorizationCredentials = Depends(HTTPBearer())):
     if not credentials or credentials.scheme.lower() != "bearer":
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid Refresh Token")
+        raise unauthorized_error("Token inválido o ausente")
 
     refresh_token = credentials.credentials
     payload = auth_service.decode_and_validate(refresh_token, expected_type="refresh")
@@ -52,7 +54,7 @@ def refresh(credentials: HTTPAuthorizationCredentials = Depends(HTTPBearer())):
     subject = payload.get("sub")
     role = payload.get("role")
     if not subject:
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid Refresh Token")
+        raise unauthorized_error("Token inválido o ausente")
 
     # Re-issue new tokens
     from app.auth.jwt_utils import create_token
@@ -69,7 +71,7 @@ def refresh(credentials: HTTPAuthorizationCredentials = Depends(HTTPBearer())):
 @router.post("/logout", response_model=ApiResponse)
 def logout(credentials: HTTPAuthorizationCredentials = Depends(HTTPBearer())):
     if not credentials or credentials.scheme.lower() != "bearer":
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid Token")
+        raise unauthorized_error("Token inválido o ausente")
 
     token = credentials.credentials
     # Blacklist whatever token is presented (typically refresh token per spec)

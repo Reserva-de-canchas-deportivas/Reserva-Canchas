@@ -21,8 +21,9 @@ from app.schemas.tarifario import (
     TarifarioResponse,
     TarifarioListResponse,
     ApiResponse,
-    ErrorResponse
+    ErrorResponse,
 )
+from app.services.rbac import require_role_dependency
 
 logger = logging.getLogger(__name__)
 
@@ -35,6 +36,11 @@ router = APIRouter(
         500: {"model": ErrorResponse, "description": "Error interno del servidor"}
     }
 )
+
+ALL_ROLES = ("admin", "personal", "cliente")
+ANY_ROLE_DEP = require_role_dependency(*ALL_ROLES)
+ADMIN_PERSONAL_DEP = require_role_dependency("admin", "personal")
+ADMIN_ONLY_DEP = require_role_dependency("admin")
 
 
 def get_tarifario_service(db: Session = Depends(get_db)) -> TarifarioService:
@@ -51,7 +57,8 @@ def get_tarifario_service(db: Session = Depends(get_db)) -> TarifarioService:
 )
 def crear_tarifa(
     tarifa_data: TarifarioCreate,
-    service: TarifarioService = Depends(get_tarifario_service)
+    service: TarifarioService = Depends(get_tarifario_service),
+    _: object = Depends(ADMIN_PERSONAL_DEP),
 ):
     """
     Crear una nueva tarifa:
@@ -92,7 +99,8 @@ def listar_tarifas(
     dia_semana: Optional[int] = Query(None, ge=0, le=6, description="Filtrar por día (0-6)"),
     page: int = Query(1, ge=1, description="Número de página"),
     page_size: int = Query(20, ge=1, le=100, description="Tamaño de página"),
-    service: TarifarioService = Depends(get_tarifario_service)
+    service: TarifarioService = Depends(get_tarifario_service),
+    _: object = Depends(ANY_ROLE_DEP),
 ):
     """
     Listar tarifas con opciones de filtrado:
@@ -135,7 +143,8 @@ def listar_tarifas(
 )
 def obtener_tarifa(
     tarifa_id: str = Path(..., description="ID de la tarifa"),
-    service: TarifarioService = Depends(get_tarifario_service)
+    service: TarifarioService = Depends(get_tarifario_service),
+    _: object = Depends(ANY_ROLE_DEP),
 ):
     """
     Obtener detalle completo de una tarifa específica.
@@ -164,7 +173,8 @@ def consultar_tarifa_aplicable(
     cancha_id: str = Query(..., description="ID de la cancha"),
     dia_semana: int = Query(..., ge=0, le=6, description="Día de la semana (0-6)"),
     hora: str = Query(..., description="Hora en formato HH:MM"),
-    service: TarifarioService = Depends(get_tarifario_service)
+    service: TarifarioService = Depends(get_tarifario_service),
+    _: object = Depends(ANY_ROLE_DEP),
 ):
     """
     Consultar tarifa aplicable según prioridad:
@@ -198,7 +208,8 @@ def consultar_tarifa_aplicable(
 def actualizar_tarifa(
     tarifa_id: str = Path(..., description="ID de la tarifa"),
     tarifa_data: TarifarioUpdate = ...,
-    service: TarifarioService = Depends(get_tarifario_service)
+    service: TarifarioService = Depends(get_tarifario_service),
+    _: object = Depends(ADMIN_PERSONAL_DEP),
 ):
     """
     Actualizar tarifa existente (solo campos proporcionados):
@@ -232,7 +243,8 @@ def actualizar_tarifa(
 )
 def eliminar_tarifa(
     tarifa_id: str = Path(..., description="ID de la tarifa"),
-    service: TarifarioService = Depends(get_tarifario_service)
+    service: TarifarioService = Depends(get_tarifario_service),
+    _: object = Depends(ADMIN_ONLY_DEP),
 ):
     """
     Eliminar tarifa:
