@@ -7,6 +7,7 @@ from app.models.sede import Sede
 from app.models.cancha import Cancha
 from app.models.tarifario import Tarifario 
 from app.models.reserva import Reserva
+from app.domain.security_models import ApiKey, SecurityAuditLog
 
 # In-memory SQLite shared across threads for temporary data
 DATABASE_URL = "sqlite://"

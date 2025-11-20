@@ -18,8 +18,9 @@ from app.schemas.disponibilidad import (
     DisponibilidadQuery,
     DisponibilidadResponse,
     ApiResponse,
-    ErrorResponse
+    ErrorResponse,
 )
+from app.services.rbac import require_role_dependency
 
 logger = logging.getLogger(__name__)
 
@@ -32,6 +33,9 @@ router = APIRouter(
         500: {"model": ErrorResponse, "description": "Error interno del servidor"}
     }
 )
+
+ALL_ROLES = ("admin", "personal", "cliente")
+ANY_ROLE_DEP = require_role_dependency(*ALL_ROLES)
 
 
 def get_disponibilidad_service(db: Session = Depends(get_db)) -> DisponibilidadService:
@@ -67,7 +71,8 @@ def consultar_disponibilidad(
         le=240,
         description="Duración de cada slot en minutos (15-240)"
     ),
-    service: DisponibilidadService = Depends(get_disponibilidad_service)
+    service: DisponibilidadService = Depends(get_disponibilidad_service),
+    _: object = Depends(ANY_ROLE_DEP),
 ):
     """
     Consultar disponibilidad de una cancha en una fecha específica.

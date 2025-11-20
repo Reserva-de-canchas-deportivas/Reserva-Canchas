@@ -18,6 +18,7 @@ from app.schemas.sede import (
     ApiResponse,
     ErrorResponse
 )
+from app.services.rbac import require_role_dependency
 
 logger = logging.getLogger(__name__)
 
@@ -30,6 +31,11 @@ router = APIRouter(
         500: {"model": ErrorResponse, "description": "Error interno del servidor"}
     }
 )
+
+ALL_ROLES = ("admin", "personal", "cliente")
+ANY_ROLE_DEP = require_role_dependency(*ALL_ROLES)
+ADMIN_PERSONAL_DEP = require_role_dependency("admin", "personal")
+ADMIN_ONLY_DEP = require_role_dependency("admin")
 
 
 def get_sede_service(db: Session = Depends(get_db)) -> SedeService:
@@ -49,7 +55,8 @@ def get_sede_service(db: Session = Depends(get_db)) -> SedeService:
     - Zona horaria IANA válida (ej: America/Bogota)
     - Horarios por día en formato HH:MM-HH:MM
     - Buffer entre reservas (0-60 minutos)
-    """
+    """,
+    dependencies=[Depends(ADMIN_PERSONAL_DEP)],
 )
 async def crear_sede(
     sede: SedeCreate,
@@ -85,7 +92,8 @@ async def crear_sede(
     summary="Listar sedes",
     description="""
     Obtiene lista de sedes con filtros opcionales y paginación.
-    """
+    """,
+    dependencies=[Depends(ANY_ROLE_DEP)],
 )
 async def listar_sedes(
     activo: Optional[bool] = Query(None, description="Filtrar por estado activo"),
@@ -119,7 +127,8 @@ async def listar_sedes(
 @router.get(
     "/{sede_id}",
     response_model=ApiResponse,
-    summary="Obtener detalle de sede"
+    summary="Obtener detalle de sede",
+    dependencies=[Depends(ANY_ROLE_DEP)],
 )
 async def obtener_sede(
     sede_id: str = Path(..., description="ID de la sede"),
@@ -155,7 +164,8 @@ async def obtener_sede(
     description="""
     Actualiza campos específicos de una sede existente.
     Solo se actualizan los campos proporcionados.
-    """
+    """,
+    dependencies=[Depends(ADMIN_PERSONAL_DEP)],
 )
 async def actualizar_sede(
     sede_id: str = Path(..., description="ID de la sede"),
@@ -191,7 +201,8 @@ async def actualizar_sede(
     summary="Eliminar sede",
     description="""
     Elimina una sede si no tiene canchas o reservas asociadas.
-    """
+    """,
+    dependencies=[Depends(ADMIN_ONLY_DEP)],
 )
 async def eliminar_sede(
     sede_id: str = Path(..., description="ID de la sede"),

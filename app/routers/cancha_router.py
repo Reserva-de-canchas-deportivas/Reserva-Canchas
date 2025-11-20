@@ -23,8 +23,9 @@ from app.schemas.cancha import (
     ApiResponse,
     ErrorResponse,
     EstadoCancha,
-    TipoSuperficie
+    TipoSuperficie,
 )
+from app.services.rbac import require_role_dependency
 
 logger = logging.getLogger(__name__)
 
@@ -37,6 +38,11 @@ router = APIRouter(
         500: {"model": ErrorResponse, "description": "Error interno del servidor"}
     }
 )
+
+ALL_ROLES = ("admin", "personal", "cliente")
+ANY_ROLE_DEP = require_role_dependency(*ALL_ROLES)
+ADMIN_PERSONAL_DEP = require_role_dependency("admin", "personal")
+ADMIN_ONLY_DEP = require_role_dependency("admin")
 
 
 def get_cancha_service(db: Session = Depends(get_db)) -> CanchaService:
@@ -54,7 +60,8 @@ def get_cancha_service(db: Session = Depends(get_db)) -> CanchaService:
 def crear_cancha(
     sede_id: str = Path(..., description="ID de la sede"),
     cancha_data: CanchaCreate = ...,
-    service: CanchaService = Depends(get_cancha_service)
+    service: CanchaService = Depends(get_cancha_service),
+    _: object = Depends(ADMIN_PERSONAL_DEP),
 ):
     """
     Crear una nueva cancha en una sede:
@@ -87,7 +94,8 @@ def listar_canchas_por_sede(
     tipo_superficie: Optional[TipoSuperficie] = Query(None, description="Filtrar por tipo de superficie"),
     page: int = Query(1, ge=1, description="Número de página"),
     page_size: int = Query(20, ge=1, le=100, description="Tamaño de página"),
-    service: CanchaService = Depends(get_cancha_service)
+    service: CanchaService = Depends(get_cancha_service),
+    _: object = Depends(ANY_ROLE_DEP),
 ):
     """
     Listar canchas de una sede con opciones de filtrado:
@@ -132,7 +140,8 @@ def listar_canchas_por_sede(
 )
 def obtener_cancha(
     cancha_id: str = Path(..., description="ID de la cancha"),
-    service: CanchaService = Depends(get_cancha_service)
+    service: CanchaService = Depends(get_cancha_service),
+    _: object = Depends(ANY_ROLE_DEP),
 ):
     """
     Obtener detalle completo de una cancha específica.
@@ -159,7 +168,8 @@ def obtener_cancha(
 def actualizar_cancha(
     cancha_id: str = Path(..., description="ID de la cancha"),
     cancha_data: CanchaUpdate = ...,
-    service: CanchaService = Depends(get_cancha_service)
+    service: CanchaService = Depends(get_cancha_service),
+    _: object = Depends(ADMIN_PERSONAL_DEP),
 ):
     """
     Actualizar cancha existente (solo campos proporcionados):
@@ -188,7 +198,8 @@ def actualizar_cancha(
 )
 def eliminar_cancha(
     cancha_id: str = Path(..., description="ID de la cancha"),
-    service: CanchaService = Depends(get_cancha_service)
+    service: CanchaService = Depends(get_cancha_service),
+    _: object = Depends(ADMIN_ONLY_DEP),
 ):
     """
     Eliminar cancha (solo si no tiene reservas futuras):

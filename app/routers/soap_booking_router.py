@@ -2,9 +2,10 @@
 Router SOAP Manual para Reservas
 """
 
-from fastapi import APIRouter, Response, Request
+from fastapi import APIRouter, Response, Request, Depends
 import logging
 import xml.etree.ElementTree as ET
+from app.services.api_key_guard import require_api_key
 
 logger = logging.getLogger(__name__)
 
@@ -12,7 +13,7 @@ booking_soap_router = APIRouter(prefix="/soap/booking", tags=["SOAP - Booking"])
 
 
 @booking_soap_router.get("")
-async def get_booking_wsdl():
+async def get_booking_wsdl(api_key=Depends(require_api_key)):
     """Retornar WSDL para BookingService"""
     wsdl = """<?xml version="1.0" encoding="UTF-8"?>
 <definitions xmlns="http://schemas.xmlsoap.org/wsdl/"
@@ -76,7 +77,7 @@ async def get_booking_wsdl():
 
 
 @booking_soap_router.post("")
-async def handle_booking_soap(request: Request):
+async def handle_booking_soap(request: Request, api_key=Depends(require_api_key)):
     """Manejar requests SOAP de reservas"""
     try:
         body = await request.body()

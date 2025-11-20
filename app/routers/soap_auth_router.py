@@ -3,10 +3,11 @@ Router SOAP Manual para Autenticación
 Sin dependencia de fastapi-soap (tiene bugs)
 """
 
-from fastapi import APIRouter, Response, Request
+from fastapi import APIRouter, Response, Request, Depends
 from datetime import datetime, timedelta
 import logging
 import xml.etree.ElementTree as ET
+from app.services.api_key_guard import require_api_key
 
 logger = logging.getLogger(__name__)
 
@@ -14,7 +15,7 @@ auth_soap_router = APIRouter(prefix="/soap/auth", tags=["SOAP - Auth"])
 
 
 @auth_soap_router.get("")
-async def get_auth_wsdl():
+async def get_auth_wsdl(api_key=Depends(require_api_key)):
     """Retornar WSDL para AuthService"""
     wsdl = """<?xml version="1.0" encoding="UTF-8"?>
 <definitions xmlns="http://schemas.xmlsoap.org/wsdl/"
@@ -80,7 +81,7 @@ async def get_auth_wsdl():
 
 
 @auth_soap_router.post("")
-async def handle_auth_soap(request: Request):
+async def handle_auth_soap(request: Request, api_key=Depends(require_api_key)):
     """Manejar requests SOAP de autenticación"""
     try:
         body = await request.body()

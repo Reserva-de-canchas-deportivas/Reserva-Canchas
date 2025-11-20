@@ -1,4 +1,38 @@
 # Reserva-Canchas
+
+## Seguridad Transversal (HU-006)
+
+Esta versión incorpora autenticación JWT RS256, control de acceso por roles y API Keys obligatorias para integraciones externas.
+
+- **JWT RS256**: los tokens se firman con la clave privada ubicada en `keys/private.pem` (o variables `PRIVATE_KEY/ PUBLIC_KEY`). La verificación usa la clave pública y se valida `exp`, `jti` y `type` (`access`/`refresh`).
+- **Roles**: se soportan los roles `cliente`, `personal` y `admin`. Los endpoints marcan sus permisos con el decorador `@require_role(...)`. Ejemplos:
+  - `/api/v1/usuarios/perfil` ⇒ solo `admin`.
+  - CRUD de sedes/canchas/tarifario ⇒ `admin`/`personal` (consultas admiten todos los roles).
+  - `/api/v1/disponibilidad` ⇒ todos los roles autenticados.
+- **API Keys**: las rutas SOAP (`/soap/*`) exigen `X-Api-Key`. Se siembra una llave demo `DEMO-INTEGRACION-2024-KEY` (hash persistido en BD). Cada intento exitoso y fallido queda registrado en `security_audit_logs`.
+- **Auditoría**: cualquier validación (tokens, roles, API Keys) genera eventos en la tabla `security_audit_logs` con ip, agente y motivo.
+- **Usuarios semilla**:
+  - `admin@example.com` / `admin123` (rol `admin`)
+  - `blocked@example.com` / `blocked123` (rol `cliente`, estado `bloqueado`)
+
+### Casos de prueba sugeridos
+1. Token válido ⇒ acceder a `/api/v1/usuarios/perfil` con `Authorization: Bearer <token>` desde login del admin. Debe responder 200 con el rol.
+2. Token expirado ⇒ manipular `exp` (o esperar) y reintentar ⇒ 401 `TOKEN_EXPIRED`.
+3. Usuario sin rol requerido ⇒ iniciar sesión con un `cliente` activo (crear mediante seed o repositorio) y llamar `/api/v1/usuarios/perfil` ⇒ 403 `FORBIDDEN`.
+4. API Key inexistente ⇒ llamar algún `/soap/*` sin `X-Api-Key` o con valor aleatorio ⇒ 401 `INVALID_API_KEY`.
+5. Token manipulado ⇒ alterar un caracter del JWT ⇒ 401 `SIGNATURE_INVALID`.
+
+La respuesta estándar de error para seguridad es:
+
+```json
+{
+  "error": {
+    "code": "UNAUTHORIZED",
+    "message": "Token inválido o ausente"
+  }
+}
+```
+
 # Comandos GIT
 
 ### Conceptos Clave

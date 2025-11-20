@@ -2,8 +2,9 @@
 Router SOAP Manual para Facturación
 """
 
-from fastapi import APIRouter, Response, Request
+from fastapi import APIRouter, Response, Request, Depends
 import logging
+from app.services.api_key_guard import require_api_key
 
 logger = logging.getLogger(__name__)
 
@@ -11,7 +12,7 @@ billing_soap_router = APIRouter(prefix="/soap/billing", tags=["SOAP - Billing"])
 
 
 @billing_soap_router.get("")
-async def get_billing_wsdl():
+async def get_billing_wsdl(api_key=Depends(require_api_key)):
     """Retornar WSDL para BillingService"""
     wsdl = """<?xml version="1.0" encoding="UTF-8"?>
 <definitions xmlns="http://schemas.xmlsoap.org/wsdl/"
@@ -28,7 +29,7 @@ async def get_billing_wsdl():
 
 
 @billing_soap_router.post("")
-async def handle_billing_soap(request: Request):
+async def handle_billing_soap(request: Request, api_key=Depends(require_api_key)):
     """Manejar requests SOAP de facturación"""
     response_xml = """<?xml version="1.0" encoding="UTF-8"?>
 <soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/">
