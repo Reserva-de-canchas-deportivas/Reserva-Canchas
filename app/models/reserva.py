@@ -3,7 +3,7 @@ Modelo de Reserva - SQLAlchemy
 Modelo básico para soportar consulta de disponibilidad
 """
 
-from sqlalchemy import Column, String, Integer, ForeignKey, Index
+from sqlalchemy import Column, String, Integer, ForeignKey, Index, Numeric
 from sqlalchemy.orm import relationship
 from datetime import datetime
 import uuid
@@ -25,6 +25,14 @@ class Reserva(Base):
         default=lambda: str(uuid.uuid4()),
         unique=True,
         nullable=False
+    )
+    
+    sede_id = Column(
+        String(36),
+        ForeignKey('sedes.id', ondelete='RESTRICT'),
+        nullable=False,
+        index=True,
+        comment="ID de la sede"
     )
     
     cancha_id = Column(
@@ -58,6 +66,38 @@ class Reserva(Base):
         nullable=False,
         default="pending",
         comment="Estado: hold, pending, confirmed, cancelled, completed"
+    )
+
+    usuario_id = Column(
+        String(36),
+        nullable=True,
+        comment="Usuario que creó la reserva/HOLD"
+    )
+
+    vence_hold = Column(
+        String(50),
+        nullable=True,
+        comment="Fecha/hora en que expira el HOLD"
+    )
+
+    clave_idempotencia = Column(
+        String(120),
+        unique=True,
+        nullable=True,
+        comment="Clave idempotente para evitar duplicados"
+    )
+
+    total = Column(
+        Numeric(12, 2),
+        nullable=True,
+        comment="Total calculado para el HOLD"
+    )
+
+    moneda = Column(
+        String(3),
+        nullable=True,
+        default="COP",
+        comment="Moneda del cobro"
     )
     
     # Información adicional (básica)
@@ -102,6 +142,7 @@ class Reserva(Base):
         Index('idx_reserva_cancha_fecha', 'cancha_id', 'fecha'),
         Index('idx_reserva_fecha_estado', 'fecha', 'estado'),
         Index('idx_reserva_cancha_fecha_hora', 'cancha_id', 'fecha', 'hora_inicio', 'hora_fin'),
+        Index('idx_reserva_clave_idemp', 'clave_idempotencia', unique=True),
     )
     
     def __repr__(self):
@@ -116,6 +157,12 @@ class Reserva(Base):
             "hora_inicio": self.hora_inicio,
             "hora_fin": self.hora_fin,
             "estado": self.estado,
+            "sede_id": self.sede_id,
+            "usuario_id": self.usuario_id,
+            "vence_hold": self.vence_hold,
+            "total": float(self.total) if self.total is not None else None,
+            "moneda": self.moneda,
+            "clave_idempotencia": self.clave_idempotencia,
             "cliente_nombre": self.cliente_nombre,
             "cliente_email": self.cliente_email,
             "created_at": self.created_at,
