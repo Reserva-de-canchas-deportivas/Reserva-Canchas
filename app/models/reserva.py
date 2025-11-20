@@ -3,7 +3,7 @@ Modelo de Reserva - SQLAlchemy
 Modelo básico para soportar consulta de disponibilidad
 """
 
-from sqlalchemy import Column, String, Integer, ForeignKey, Index, Numeric
+from sqlalchemy import Column, String, Integer, ForeignKey, Index, Numeric, Boolean
 from sqlalchemy.orm import relationship
 from datetime import datetime
 import uuid
@@ -68,37 +68,13 @@ class Reserva(Base):
         comment="Estado: hold, pending, confirmed, cancelled, completed"
     )
 
-    usuario_id = Column(
-        String(36),
-        nullable=True,
-        comment="Usuario que creó la reserva/HOLD"
-    )
-
-    vence_hold = Column(
-        String(50),
-        nullable=True,
-        comment="Fecha/hora en que expira el HOLD"
-    )
-
-    clave_idempotencia = Column(
-        String(120),
-        unique=True,
-        nullable=True,
-        comment="Clave idempotente para evitar duplicados"
-    )
-
-    total = Column(
-        Numeric(12, 2),
-        nullable=True,
-        comment="Total calculado para el HOLD"
-    )
-
-    moneda = Column(
-        String(3),
-        nullable=True,
-        default="COP",
-        comment="Moneda del cobro"
-    )
+    usuario_id = Column(String(36), nullable=True, comment="Usuario que creó la reserva/HOLD")
+    vence_hold = Column(String(50), nullable=True, comment="Fecha/hora en que expira el HOLD")
+    clave_idempotencia = Column(String(120), unique=True, nullable=True, comment="Clave idempotente para evitar duplicados")
+    confirm_idempotencia = Column(String(120), nullable=True, comment="Clave idempotente para confirmar")
+    total = Column(Numeric(12, 2), nullable=True, comment="Total calculado para el HOLD")
+    moneda = Column(String(3), nullable=True, default="COP", comment="Moneda del cobro")
+    pago_capturado = Column(Boolean, nullable=False, default=False, comment="Indica si el pago fue capturado")
     
     # Información adicional (básica)
     cliente_nombre = Column(
@@ -163,6 +139,8 @@ class Reserva(Base):
             "total": float(self.total) if self.total is not None else None,
             "moneda": self.moneda,
             "clave_idempotencia": self.clave_idempotencia,
+            "confirm_idempotencia": self.confirm_idempotencia,
+            "pago_capturado": bool(self.pago_capturado),
             "cliente_nombre": self.cliente_nombre,
             "cliente_email": self.cliente_email,
             "created_at": self.created_at,

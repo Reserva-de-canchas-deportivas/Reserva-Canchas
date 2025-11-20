@@ -40,3 +40,20 @@ class ReservaApiResponse(BaseModel):
     mensaje: str
     data: ReservaHoldData | None
     success: bool
+
+
+class ReservaConfirmRequest(BaseModel):
+    clave_idempotencia: str | None = None
+
+
+class ReservaConfirmData(BaseModel):
+    reserva_id: str
+    estado: str
+    total: float
+    moneda: str
+
+
+class ReservaConfirmResponse(BaseModel):
+    mensaje: str
+    data: ReservaConfirmData
+    success: bool = True
