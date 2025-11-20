@@ -165,44 +165,30 @@ class TarifarioRepository:
     def obtener_tarifa_aplicable(
         self,
         sede_id: str,
-        cancha_id: str,
+        cancha_id: Optional[str],
         dia_semana: int,
         hora: str
     ) -> Optional[Tarifario]:
         """
         Obtener la tarifa aplicable según prioridad cancha > sede
-        
-        Orden de búsqueda:
-        1. Buscar tarifa específica de CANCHA que cubra la hora
-        2. Si no existe, buscar tarifa de SEDE que cubra la hora
-        3. Si no existe ninguna, retornar None
-        
-        Args:
-            sede_id: ID de la sede
-            cancha_id: ID de la cancha
-            dia_semana: Día de la semana (0-6)
-            hora: Hora a consultar (HH:MM)
-            
-        Returns:
-            Tarifa aplicable o None
         """
-        # 1. Intentar con tarifa específica de cancha
-        tarifa_cancha = self.db.query(Tarifario).filter(
-            Tarifario.cancha_id == cancha_id,
-            Tarifario.dia_semana == dia_semana,
-            Tarifario.hora_inicio <= hora,
-            Tarifario.hora_fin > hora,
-            Tarifario.activo == 1
-        ).first()
+        tarifa_cancha = None
+        if cancha_id:
+            tarifa_cancha = self.db.query(Tarifario).filter(
+                Tarifario.cancha_id == cancha_id,
+                Tarifario.dia_semana == dia_semana,
+                Tarifario.hora_inicio <= hora,
+                Tarifario.hora_fin > hora,
+                Tarifario.activo == 1
+            ).first()
         
         if tarifa_cancha:
             logger.info(f"Tarifa específica de cancha encontrada: {tarifa_cancha.id}")
             return tarifa_cancha
         
-        # 2. Si no hay tarifa de cancha, buscar tarifa de sede
         tarifa_sede = self.db.query(Tarifario).filter(
             Tarifario.sede_id == sede_id,
-            Tarifario.cancha_id.is_(None),  # Tarifa general
+            Tarifario.cancha_id.is_(None),
             Tarifario.dia_semana == dia_semana,
             Tarifario.hora_inicio <= hora,
             Tarifario.hora_fin > hora,
@@ -214,8 +200,7 @@ class TarifarioRepository:
             return tarifa_sede
         
         logger.warning(
-            f"No se encontró tarifa aplicable para "
-            f"sede {sede_id}, cancha {cancha_id}, día {dia_semana}, hora {hora}"
+            f"No se encontró tarifa aplicable para sede {sede_id}, cancha {cancha_id}, día {dia_semana}, hora {hora}"
         )
         return None
     
@@ -298,3 +283,35 @@ class TarifarioRepository:
         ).first()
         
         return cancha is not None
+
+
+def seed_tarifas_demo(db: Session, sede_id: str, cancha_id: Optional[str]) -> None:
+    """Crear una tarifa de sede y una específica de cancha si no existen registros."""
+    if db.query(Tarifario).count() > 0:
+        return
+
+    tarifa_sede = Tarifario(
+        sede_id=sede_id,
+        cancha_id=None,
+        dia_semana=3,
+        hora_inicio="18:00",
+        hora_fin="22:00",
+        precio_por_bloque=120000,
+        moneda="COP",
+    )
+    db.add(tarifa_sede)
+
+    if cancha_id:
+        tarifa_cancha = Tarifario(
+            sede_id=sede_id,
+            cancha_id=cancha_id,
+            dia_semana=3,
+            hora_inicio="18:00",
+            hora_fin="20:00",
+            precio_por_bloque=150000,
+            moneda="COP",
+        )
+        db.add(tarifa_cancha)
+
+    db.commit()
+    logging.getLogger(__name__).info("Tarifas demo sembradas para sede %s", sede_id)

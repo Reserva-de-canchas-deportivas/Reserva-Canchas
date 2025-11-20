@@ -4,7 +4,7 @@ Validación de datos de entrada/salida con validaciones complejas
 """
 
 from pydantic import BaseModel, Field, field_validator, model_validator, ConfigDict
-from typing import Optional, List
+from typing import Optional, List, Literal
 from decimal import Decimal
 import re
 
@@ -205,3 +205,16 @@ class ErrorResponse(BaseModel):
             }
         }
     )
+
+
+class TarifaResolverData(BaseModel):
+    origen: Literal["cancha", "sede"]
+    tarifa_id: str
+    moneda: str
+    precio_por_bloque: float
+
+
+class TarifaResolverResponse(BaseModel):
+    mensaje: str
+    data: TarifaResolverData
+    success: bool = True

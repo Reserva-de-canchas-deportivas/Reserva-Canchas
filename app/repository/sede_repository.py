@@ -8,6 +8,7 @@ from sqlalchemy import or_, func
 from typing import List, Optional
 import logging
 import json
+from datetime import datetime
 
 from app.models.sede import Sede
 from app.schemas.sede import SedeCreate, SedeUpdate
@@ -148,3 +149,34 @@ class SedeRepository:
         """Verificar si la sede tiene reservas asociadas"""
         # TODO: Implementar cuando tengas el modelo Reserva
         return False, 0
+
+
+def seed_sedes_demo(db: Session) -> Optional[Sede]:
+    """Crear una sede demo si no existen registros."""
+    existente = db.query(Sede).filter(Sede.activo == 1).first()
+    if existente:
+        return existente
+
+    horarios = {
+        "lunes": ["08:00-22:00"],
+        "martes": ["08:00-22:00"],
+        "miercoles": ["08:00-22:00"],
+        "jueves": ["08:00-22:00"],
+        "viernes": ["08:00-22:00"],
+        "sabado": ["09:00-20:00"],
+        "domingo": ["09:00-18:00"],
+    }
+
+    sede = Sede(
+        nombre="Sede Demo Norte",
+        direccion="Cra 1 # 23-45",
+        zona_horaria="America/Bogota",
+        horario_apertura_json=json.dumps(horarios),
+        minutos_buffer=10,
+        activo=1,
+    )
+    db.add(sede)
+    db.commit()
+    db.refresh(sede)
+    logger.info("Sede demo creada: %s", sede.id)
+    return sede

@@ -8,12 +8,23 @@ from typing import Optional, List
 from fastapi import HTTPException, status
 from sqlalchemy.exc import IntegrityError
 import logging
+from datetime import datetime
+from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
 from app.repository.tarifario_repository import TarifarioRepository
-from app.schemas.tarifario import TarifarioCreate, TarifarioUpdate, TarifarioResponse
+from app.schemas.tarifario import (
+    TarifarioCreate,
+    TarifarioUpdate,
+    TarifarioResponse,
+    TarifaResolverData,
+)
 from app.models.tarifario import Tarifario
+from app.models.sede import Sede
+from app.models.cancha import Cancha
+from app.services.cache import TTLCache
 
 logger = logging.getLogger(__name__)
+resolver_cache = TTLCache(ttl_seconds=300)
 
 
 class TarifarioService:
@@ -351,3 +362,118 @@ class TarifarioService:
                     }
                 }
             )
+
+    def resolver_precio(
+        self,
+        *,
+        fecha: str,
+        hora_inicio: str,
+        hora_fin: str,
+        sede_id: str,
+        cancha_id: Optional[str] = None,
+    ) -> TarifaResolverData:
+        cache_key = self._build_cache_key(fecha, hora_inicio, hora_fin, sede_id, cancha_id)
+        cached = resolver_cache.get(cache_key)
+        if cached:
+            return TarifaResolverData(**cached)
+
+        sede = self._obtener_sede(sede_id)
+        if cancha_id:
+            cancha = self._obtener_cancha(cancha_id)
+            if cancha.sede_id != sede.id:
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail={
+                        "error": {
+                            "code": "CANCHA_SEDE_MISMATCH",
+                            "message": "La cancha no pertenece a la sede indicada",
+                            "details": {"cancha_id": cancha_id, "sede_id": sede_id},
+                        }
+                    },
+                )
+
+        tz = self._get_timezone(sede)
+        inicio_dt = self._parse_fecha_hora(fecha, hora_inicio, tz)
+        fin_dt = self._parse_fecha_hora(fecha, hora_fin, tz)
+
+        if fin_dt <= inicio_dt:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail={"error": {"code": "HORARIO_INVALIDO", "message": "hora_fin debe ser mayor que hora_inicio"}},
+            )
+
+        dia_semana = inicio_dt.weekday()
+        tarifa = self.repository.obtener_tarifa_aplicable(sede_id, cancha_id, dia_semana, hora_inicio)
+
+        if not tarifa:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail={
+                    "error": {
+                        "code": "SIN_TARIFA",
+                        "message": "No existe tarifa para la franja solicitada",
+                        "details": {
+                            "dia_semana": dia_semana,
+                            "hora_inicio": hora_inicio,
+                            "hora_fin": hora_fin,
+                        },
+                    }
+                },
+            )
+
+        data = TarifaResolverData(
+            origen="cancha" if tarifa.cancha_id else "sede",
+            tarifa_id=tarifa.id,
+            moneda=tarifa.moneda,
+            precio_por_bloque=float(tarifa.precio_por_bloque),
+        )
+        resolver_cache.set(cache_key, data.model_dump())
+        return data
+
+    def _obtener_sede(self, sede_id: str) -> Sede:
+        sede = self.db.query(Sede).filter(Sede.id == sede_id, Sede.activo == 1).first()
+        if not sede:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail={"error": {"code": "SEDE_NO_ENCONTRADA", "message": "Sede no encontrada"}},
+            )
+        return sede
+
+    def _obtener_cancha(self, cancha_id: str) -> Cancha:
+        cancha = self.db.query(Cancha).filter(Cancha.id == cancha_id, Cancha.activo == 1).first()
+        if not cancha:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail={"error": {"code": "CANCHA_NO_ENCONTRADA", "message": "Cancha no encontrada"}},
+            )
+        return cancha
+
+    def _parse_fecha_hora(self, fecha: str, hora: str, tz: ZoneInfo) -> datetime:
+        try:
+            dt = datetime.strptime(f"{fecha} {hora}", "%Y-%m-%d %H:%M")
+        except ValueError:
+            raise HTTPException(
+                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                detail={"error": {"code": "VALIDATION_ERROR", "message": "Formato de fecha u hora inválido"}},
+            )
+        return dt.replace(tzinfo=tz)
+
+    def _get_timezone(self, sede: Sede) -> ZoneInfo:
+        try:
+            return ZoneInfo(sede.zona_horaria)
+        except ZoneInfoNotFoundError as exc:
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail={"error": {"code": "ZONA_HORARIA_INVALIDA", "message": str(exc)}}
+            )
+
+    def _build_cache_key(
+        self,
+        fecha: str,
+        hora_inicio: str,
+        hora_fin: str,
+        sede_id: str,
+        cancha_id: Optional[str],
+    ) -> str:
+        return f"{sede_id}:{cancha_id or 'general'}:{fecha}:{hora_inicio}:{hora_fin}"
+

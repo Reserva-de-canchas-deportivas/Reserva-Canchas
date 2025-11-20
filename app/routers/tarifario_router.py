@@ -22,6 +22,7 @@ from app.schemas.tarifario import (
     TarifarioListResponse,
     ApiResponse,
     ErrorResponse,
+    TarifaResolverResponse,
 )
 from app.services.rbac import require_role_dependency
 
@@ -136,33 +137,6 @@ def listar_tarifas(
 
 
 @router.get(
-    "/{tarifa_id}",
-    response_model=ApiResponse,
-    summary="Obtener detalle de tarifa",
-    description="Obtiene la información completa de una tarifa por su ID"
-)
-def obtener_tarifa(
-    tarifa_id: str = Path(..., description="ID de la tarifa"),
-    service: TarifarioService = Depends(get_tarifario_service),
-    _: object = Depends(ANY_ROLE_DEP),
-):
-    """
-    Obtener detalle completo de una tarifa específica.
-    
-    - **tarifa_id**: UUID de la tarifa
-    """
-    logger.info(f"GET /tarifario/{tarifa_id}")
-    
-    tarifa = service.obtener_tarifa(tarifa_id)
-    
-    return ApiResponse(
-        mensaje="Detalle de tarifa",
-        data=TarifarioResponse.model_validate(tarifa),
-        success=True
-    )
-
-
-@router.get(
     "/consultar/aplicable",
     response_model=ApiResponse,
     summary="Consultar tarifa aplicable",
@@ -191,9 +165,61 @@ def consultar_tarifa_aplicable(
     logger.info(f"GET /tarifario/consultar/aplicable")
     
     tarifa = service.obtener_tarifa_aplicable(sede_id, cancha_id, dia_semana, hora)
-    
+
     return ApiResponse(
         mensaje="Tarifa aplicable encontrada",
+        data=TarifarioResponse.model_validate(tarifa),
+        success=True
+    )
+
+
+@router.get(
+    "/resolver",
+    response_model=TarifaResolverResponse,
+    summary="Resolver precio prioritario",
+    description="Resuelve la tarifa aplicable priorizando cancha sobre sede y respeta la zona horaria de la sede.",
+)
+def resolver_tarifa(
+    fecha: str = Query(..., description="Fecha YYYY-MM-DD"),
+    hora_inicio: str = Query(..., description="Hora inicio HH:MM"),
+    hora_fin: str = Query(..., description="Hora fin HH:MM"),
+    sede_id: str = Query(..., description="ID de la sede"),
+    cancha_id: Optional[str] = Query(None, description="ID de la cancha (opcional)"),
+    service: TarifarioService = Depends(get_tarifario_service),
+    _: object = Depends(ANY_ROLE_DEP),
+):
+    data = service.resolver_precio(
+        fecha=fecha,
+        hora_inicio=hora_inicio,
+        hora_fin=hora_fin,
+        sede_id=sede_id,
+        cancha_id=cancha_id,
+    )
+    return TarifaResolverResponse(mensaje="Tarifa resuelta", data=data, success=True)
+
+
+@router.get(
+    "/{tarifa_id}",
+    response_model=ApiResponse,
+    summary="Obtener detalle de tarifa",
+    description="Obtiene la información completa de una tarifa por su ID"
+)
+def obtener_tarifa(
+    tarifa_id: str = Path(..., description="ID de la tarifa"),
+    service: TarifarioService = Depends(get_tarifario_service),
+    _: object = Depends(ANY_ROLE_DEP),
+):
+    """
+    Obtener detalle completo de una tarifa específica.
+    
+    - **tarifa_id**: UUID de la tarifa
+    """
+    logger.info(f"GET /tarifario/{tarifa_id}")
+    
+    tarifa = service.obtener_tarifa(tarifa_id)
+    
+    return ApiResponse(
+        mensaje="Detalle de tarifa",
         data=TarifarioResponse.model_validate(tarifa),
         success=True
     )

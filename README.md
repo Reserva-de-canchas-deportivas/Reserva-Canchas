@@ -33,6 +33,36 @@ La respuesta estándar de error para seguridad es:
 }
 ```
 
+# Resolución de Precio (HU-017)
+
+- **Endpoint:** `GET /api/v1/tarifario/resolver?fecha=YYYY-MM-DD&hora_inicio=HH:MM&hora_fin=HH:MM&sede_id=...&cancha_id?=...`
+- **Lógica:** se normaliza la fecha/hora con la zona horaria de la sede, se intenta primero la tarifa específica de la cancha y, si no existe, la general de la sede. Si no hay ninguna, se retorna `404 SIN_TARIFA`.
+- **Cache:** las respuestas se almacenan en memoria por 5 minutos (TTL configurable en código) para evitar recalcular precios repetidos.
+- **Respuesta exitosa:**
+  ```json
+  {
+    "mensaje": "Tarifa resuelta",
+    "data": {
+      "origen": "cancha",
+      "tarifa_id": "uuid",
+      "moneda": "COP",
+      "precio_por_bloque": 150000
+    },
+    "success": true
+  }
+  ```
+- **Errores controlados:**
+  - `404 SIN_TARIFA` → no existe tarifa aplicable (detalles incluyen día/hora).
+  - `500 ZONA_HORARIA_INVALIDA` → la sede tiene TZ inválida.
+  - `422 VALIDATION_ERROR` → fecha/hora con formato incorrecto (los parámetros requeridos ya son validados por FastAPI si faltan).
+
+### Casos de prueba HU-017
+1. **Tarifa de cancha:** enviar `cancha_id` con una tarifa específica → `origen="cancha"`.
+2. **Tarifa de sede:** omitir `cancha_id` o usar una sin tarifa → `origen="sede"`.
+3. **Sin tarifa:** usar horario fuera de franjas -> 404 con `SIN_TARIFA`.
+4. **Zona horaria inválida:** configura `sede.zona_horaria` a un valor erróneo y consulta → 500 controlado.
+5. **Validación:** omite parámetros obligatorios → FastAPI responde 422.
+
 # Comandos GIT
 
 ### Conceptos Clave
