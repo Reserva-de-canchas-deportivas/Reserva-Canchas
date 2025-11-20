@@ -63,6 +63,27 @@ La respuesta estándar de error para seguridad es:
 4. **Zona horaria inválida:** configura `sede.zona_horaria` a un valor erróneo y consulta → 500 controlado.
 5. **Validación:** omite parámetros obligatorios → FastAPI responde 422.
 
+# Pre-reserva HOLD (HU-019)
+
+```
+POST /api/v1/reservas
+Authorization: Bearer <token cliente/personal/admin>
+{
+  "sede_id": "...",
+  "cancha_id": "...",
+  "fecha": "2025-07-31",
+  "hora_inicio": "18:00",
+  "hora_fin": "19:00",
+  "clave_idempotencia": "HOLD-CLIENTE-123"
+}
+```
+
+- Calcula el precio reutilizando HU-017 y crea un registro en `estado="hold"` con `vence_hold = now + HOLD_TTL_MINUTES` (10 min por defecto).
+- Si se repite la misma `clave_idempotencia`, responde 200 con la misma `reserva_id` (idempotente).
+- Aplica validación de solape (hold/pending/confirmed + buffer), horario de apertura y estado de la cancha.
+- Respuestas de error clave: `RESERVA_SOLAPADA`, `FUERA_DE_APERTURA`, `CANCHA_NO_RESERVABLE`.
+
+# Comandos GIT
 # Comandos GIT
 
 ### Conceptos Clave

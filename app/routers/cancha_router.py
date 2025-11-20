@@ -50,6 +50,21 @@ def get_cancha_service(db: Session = Depends(get_db)) -> CanchaService:
     return CanchaService(db)
 
 
+def _serialize_cancha(cancha) -> CanchaResponse:
+    if hasattr(cancha, "to_dict"):
+        return CanchaResponse.model_validate(cancha.to_dict())
+    return CanchaResponse(
+        cancha_id=getattr(cancha, "id"),
+        sede_id=getattr(cancha, "sede_id"),
+        nombre=getattr(cancha, "nombre"),
+        tipo_superficie=getattr(cancha, "tipo_superficie"),
+        estado=getattr(cancha, "estado"),
+        created_at=getattr(cancha, "created_at"),
+        updated_at=getattr(cancha, "updated_at"),
+        activo=bool(getattr(cancha, "activo", True)),
+    )
+
+
 @router.post(
     "/sedes/{sede_id}/canchas/",
     response_model=ApiResponse,
@@ -77,7 +92,7 @@ def crear_cancha(
     
     return ApiResponse(
         mensaje="Cancha creada correctamente",
-        data=CanchaResponse.model_validate(cancha),
+        data=_serialize_cancha(cancha),
         success=True
     )
 
@@ -120,23 +135,7 @@ def listar_canchas_por_sede(
         page_size=page_size
     )
     
-    canchas_response = []
-    for cancha in canchas:
-        if hasattr(cancha, "to_dict"):
-            canchas_response.append(CanchaResponse.model_validate(cancha.to_dict()))
-        else:
-            canchas_response.append(
-                CanchaResponse(
-                    cancha_id=getattr(cancha, "id"),
-                    sede_id=getattr(cancha, "sede_id"),
-                    nombre=getattr(cancha, "nombre"),
-                    tipo_superficie=getattr(cancha, "tipo_superficie"),
-                    estado=getattr(cancha, "estado"),
-                    created_at=getattr(cancha, "created_at"),
-                    updated_at=getattr(cancha, "updated_at"),
-                    activo=bool(getattr(cancha, "activo", True)),
-                )
-            )
+    canchas_response = [_serialize_cancha(cancha) for cancha in canchas]
     
     return ApiResponse(
         mensaje=f"Se encontraron {total} cancha(s) en la sede",
@@ -170,7 +169,7 @@ def obtener_cancha(
     
     return ApiResponse(
         mensaje="Detalle de cancha",
-        data=CanchaResponse.model_validate(cancha),
+        data=_serialize_cancha(cancha),
         success=True
     )
 
@@ -201,7 +200,7 @@ def actualizar_cancha(
     
     return ApiResponse(
         mensaje="Cancha actualizada correctamente",
-        data=CanchaResponse.model_validate(cancha),
+        data=_serialize_cancha(cancha),
         success=True
     )
 
