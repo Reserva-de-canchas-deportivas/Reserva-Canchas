@@ -51,7 +51,7 @@ def get_cancha_service(db: Session = Depends(get_db)) -> CanchaService:
 
 
 @router.post(
-    "/sedes/{sede_id}/canchas",
+    "/sedes/{sede_id}/canchas/",
     response_model=ApiResponse,
     status_code=status.HTTP_201_CREATED,
     summary="Crear nueva cancha en una sede",
@@ -83,7 +83,7 @@ def crear_cancha(
 
 
 @router.get(
-    "/sedes/{sede_id}/canchas",
+    "/sedes/{sede_id}/canchas/",
     response_model=ApiResponse,
     summary="Listar canchas de una sede",
     description="Obtiene la lista de canchas de una sede con filtros opcionales"
@@ -120,7 +120,23 @@ def listar_canchas_por_sede(
         page_size=page_size
     )
     
-    canchas_response = [CanchaResponse.model_validate(cancha) for cancha in canchas]
+    canchas_response = []
+    for cancha in canchas:
+        if hasattr(cancha, "to_dict"):
+            canchas_response.append(CanchaResponse.model_validate(cancha.to_dict()))
+        else:
+            canchas_response.append(
+                CanchaResponse(
+                    cancha_id=getattr(cancha, "id"),
+                    sede_id=getattr(cancha, "sede_id"),
+                    nombre=getattr(cancha, "nombre"),
+                    tipo_superficie=getattr(cancha, "tipo_superficie"),
+                    estado=getattr(cancha, "estado"),
+                    created_at=getattr(cancha, "created_at"),
+                    updated_at=getattr(cancha, "updated_at"),
+                    activo=bool(getattr(cancha, "activo", True)),
+                )
+            )
     
     return ApiResponse(
         mensaje=f"Se encontraron {total} cancha(s) en la sede",

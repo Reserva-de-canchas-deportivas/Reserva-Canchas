@@ -1,4 +1,5 @@
 from datetime import datetime, timedelta, timezone
+from pathlib import Path
 import uuid
 from typing import Any, Dict, Tuple
 
@@ -39,14 +40,19 @@ class KeyProvider:
             return cls._private_pem, cls._public_pem
 
         # 3) Try default keys path in repo
-        try:
-            with open("keys/private.pem", "r", encoding="utf-8") as f:
-                cls._private_pem = f.read()
-            with open("keys/public.pem", "r", encoding="utf-8") as f:
-                cls._public_pem = f.read()
-            return cls._private_pem, cls._public_pem
-        except FileNotFoundError:
-            pass
+        default_paths = [
+            ("keys/private.pem", "keys/public.pem"),
+            ("keys/dev_private.pem", "keys/dev_public.pem"),
+        ]
+        for priv_path, pub_path in default_paths:
+            try:
+                with open(priv_path, "r", encoding="utf-8") as f:
+                    cls._private_pem = f.read()
+                with open(pub_path, "r", encoding="utf-8") as f:
+                    cls._public_pem = f.read()
+                return cls._private_pem, cls._public_pem
+            except FileNotFoundError:
+                continue
 
         # 4) Generate ephemeral key pair (dev fallback)
         if rsa is None:
@@ -63,6 +69,16 @@ class KeyProvider:
             format=serialization.PublicFormat.SubjectPublicKeyInfo,
         ).decode()
         cls._private_pem, cls._public_pem = private_pem, public_pem
+
+        # Persist generated keys for future reloads (development only)
+        key_dir = Path("keys")
+        try:
+            key_dir.mkdir(parents=True, exist_ok=True)
+            (key_dir / "dev_private.pem").write_text(private_pem, encoding="utf-8")
+            (key_dir / "dev_public.pem").write_text(public_pem, encoding="utf-8")
+        except OSError:
+            pass
+
         return cls._private_pem, cls._public_pem
 
 

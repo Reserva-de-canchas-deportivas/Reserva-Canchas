@@ -5,6 +5,9 @@ from sqlalchemy.orm import Session
 from app.database import get_db
 from app.repository.user_repository import seed_users
 from app.repository.api_key_repository import seed_api_keys
+from app.repository.sede_repository import seed_sedes_demo
+from app.repository.cancha_repository import seed_canchas_demo
+from app.repository.tarifario_repository import seed_tarifas_demo
 from app.schemas.auth import LoginRequest, ApiResponse, TokensData
 from app.services import auth_service
 from app.services.security_responses import forbidden_error, unauthorized_error
@@ -21,6 +24,10 @@ def on_startup_seed():
     with SessionLocal() as db:
         seed_users(db)
         seed_api_keys(db)
+        sede = seed_sedes_demo(db)
+        if sede:
+            cancha = seed_canchas_demo(db, sede.id)
+            seed_tarifas_demo(db, sede.id, cancha.id if cancha else None)
 
 
 @router.post("/login", response_model=ApiResponse)

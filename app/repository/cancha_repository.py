@@ -175,3 +175,27 @@ class CanchaRepository:
         ).first()
         
         return sede is not None
+
+
+def seed_canchas_demo(db: Session, sede_id: str) -> Optional[Cancha]:
+    """Crear una cancha demo para la sede indicada si no existen canchas."""
+    existente = (
+        db.query(Cancha)
+        .filter(Cancha.sede_id == sede_id, Cancha.activo == 1)
+        .first()
+    )
+    if existente:
+        return existente
+
+    cancha = Cancha(
+        sede_id=sede_id,
+        nombre="Cancha Demo 1",
+        tipo_superficie="sintetico",
+        estado="activo",
+        activo=1,
+    )
+    db.add(cancha)
+    db.commit()
+    db.refresh(cancha)
+    logger.info("Cancha demo creada: %s", cancha.id)
+    return cancha

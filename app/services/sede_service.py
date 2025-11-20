@@ -91,3 +91,50 @@ class SedeService:
         return sede
     
     # ... resto de métodos igual pero usando str en lugar de UUID
+
+    def listar_sedes(
+        self,
+        *,
+        activo: Optional[bool],
+        page: int,
+        page_size: int,
+    ) -> dict:
+        """Listar sedes con paginación y filtro de estado."""
+        query = self.db.query(Sede)
+        if activo is None:
+            query = query.filter(Sede.activo == 1)
+        else:
+            query = query.filter(Sede.activo == (1 if activo else 0))
+
+        total = query.count()
+        sedes = (
+            query.order_by(Sede.created_at)
+            .offset((page - 1) * page_size)
+            .limit(page_size)
+            .all()
+        )
+
+        sedes_payload = []
+        for sede in sedes:
+            if hasattr(sede, "to_dict"):
+                data = sede.to_dict()
+            else:
+                data = {
+                    "sede_id": sede.id,
+                    "nombre": sede.nombre,
+                    "direccion": sede.direccion,
+                    "zona_horaria": sede.zona_horaria,
+                    "horario_apertura_json": {},
+                    "minutos_buffer": sede.minutos_buffer,
+                    "created_at": sede.created_at,
+                    "updated_at": sede.updated_at,
+                    "activo": bool(sede.activo),
+                }
+            sedes_payload.append(SedeResponse(**data))
+
+        return {
+            "total": total,
+            "page": page,
+            "page_size": page_size,
+            "sedes": [s.model_dump() for s in sedes_payload],
+        }
