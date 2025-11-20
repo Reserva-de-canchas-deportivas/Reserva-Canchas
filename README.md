@@ -83,6 +83,48 @@ Authorization: Bearer <token cliente/personal/admin>
 - Aplica validación de solape (hold/pending/confirmed + buffer), horario de apertura y estado de la cancha.
 - Respuestas de error clave: `RESERVA_SOLAPADA`, `FUERA_DE_APERTURA`, `CANCHA_NO_RESERVABLE`.
 
+# Confirmar Reserva (HU-020)
+
+```
+POST /api/v1/reservas/{reserva_id}/confirmar
+Authorization: Bearer <token cliente/personal/admin>
+{
+  "clave_idempotencia": "CONFIRM-123"  // opcional
+}
+```
+
+```powershell
+$holdResponse = Invoke-RestMethod -Method Post `
+    -Uri http://localhost:8000/api/v1/reservas `
+    -Headers $headers -ContentType "application/json" `
+    -Body "{
+        \"sede_id\": \"$sedeId\",
+        \"cancha_id\": \"$canchaId\",
+        \"fecha\": \"2025-07-31\",
+        \"hora_inicio\": \"18:00\",
+        \"hora_fin\": \"19:00\",
+        \"clave_idempotencia\": \"HOLD-001\"
+    }"
+$reservaId = $holdResponse.data.reserva_id
+
+Invoke-RestMethod -Method Post `
+    -Uri "http://localhost:8000/api/v1/reservas/$reservaId/confirmar" `
+    -Headers $headers -ContentType "application/json" `
+    -Body '{ "clave_idempotencia": "CONFIRM-001" }'
+```
+
+- Solo se permiten reservas en estado `hold` o `pending`. Si `vence_hold` expiró, retorna `410 HOLD_EXPIRADO`.
+- Si `settings.require_payment_capture = True` y `pago_capturado` es falso, retorna `402 PAGO_REQUERIDO`.
+- Idempotencia: confirmar dos veces devuelve 200 con la misma `reserva_id` y estado.
+- Respuesta exitosa:
+  ```json
+  {
+    "mensaje": "Reserva confirmada",
+    "data": { "reserva_id": "uuid", "estado": "confirmed", "total": 150000, "moneda": "COP" },
+    "success": true
+  }
+  ```
+
 # Comandos GIT
 # Comandos GIT
 

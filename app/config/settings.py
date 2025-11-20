@@ -11,6 +11,7 @@ class Settings(BaseSettings):
     refresh_token_expire_seconds: int = Field(default=60 * 60 * 24 * 7)  # 7 days
     jwt_algorithm: str = "RS256"
     hold_ttl_minutes: int = Field(default=10, ge=1, le=60)
+    require_payment_capture: bool = Field(default=False)
 
     # Keys can be provided as PEM strings via env vars or loaded from files
     private_key: str | None = None

@@ -15,7 +15,12 @@ from app.domain.user_model import Usuario
 from app.models.cancha import Cancha
 from app.models.reserva import Reserva
 from app.models.sede import Sede
-from app.schemas.reserva import ReservaHoldData, ReservaHoldRequest
+from app.schemas.reserva import (
+    ReservaHoldData,
+    ReservaHoldRequest,
+    ReservaConfirmRequest,
+    ReservaConfirmData,
+)
 from app.services.tarifario_service import TarifarioService
 
 
@@ -47,7 +52,14 @@ class ReservaService:
             )
 
         self._validar_en_horario(sede, payload.hora_inicio, payload.hora_fin, inicio_dt.weekday())
-        self._validar_solape(cancha.id, payload.fecha.isoformat(), payload.hora_inicio, payload.hora_fin, sede.minutos_buffer)
+        self._validar_solape(
+            cancha.id,
+            payload.fecha.isoformat(),
+            payload.hora_inicio,
+            payload.hora_fin,
+            sede.minutos_buffer,
+            exclude_reserva_id=None,
+        )
 
         tarifa = self.tarifario_service.resolver_precio(
             fecha=payload.fecha.isoformat(),
@@ -85,6 +97,63 @@ class ReservaService:
 
         return self._respuesta(reserva), True
 
+    def confirmar_reserva(
+        self,
+        *,
+        reserva_id: str,
+        payload: ReservaConfirmRequest,
+        usuario: Usuario,
+    ) -> ReservaConfirmData:
+        reserva = self._obtener_reserva(reserva_id)
+
+        if reserva.estado == "confirmed":
+            return self._respuesta_confirm(reserva)
+
+        if reserva.estado not in {"hold", "pending"}:
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT,
+                detail={"error": {"code": "RESERVA_INVALIDA", "message": "La reserva no se puede confirmar"}},
+            )
+
+        if reserva.usuario_id and usuario.rol == "cliente" and reserva.usuario_id != usuario.usuario_id:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail={"error": {"code": "FORBIDDEN", "message": "No puedes confirmar esta reserva"}},
+            )
+
+        sede = self._obtener_sede(reserva.sede_id)
+        tz = self._obtener_timezone(sede)
+        if reserva.vence_hold:
+            vence = self._parse_iso(reserva.vence_hold)
+            if vence < datetime.now(tz):
+                raise HTTPException(
+                    status_code=status.HTTP_410_GONE,
+                    detail={"error": {"code": "HOLD_EXPIRADO", "message": "La pre-reserva ha expirado"}},
+                )
+
+        if settings.require_payment_capture and not reserva.pago_capturado:
+            raise HTTPException(
+                status_code=status.HTTP_402_PAYMENT_REQUIRED,
+                detail={"error": {"code": "PAGO_REQUERIDO", "message": "Se requiere pago capturado"}},
+            )
+
+        self._validar_solape(
+            cancha_id=reserva.cancha_id,
+            fecha=reserva.fecha,
+            hora_inicio=reserva.hora_inicio,
+            hora_fin=reserva.hora_fin,
+            buffer_minutos=sede.minutos_buffer,
+            exclude_reserva_id=reserva.id,
+        )
+
+        reserva.estado = "confirmed"
+        if payload.clave_idempotencia:
+            reserva.confirm_idempotencia = payload.clave_idempotencia
+        self.db.add(reserva)
+        self.db.commit()
+        self.db.refresh(reserva)
+        return self._respuesta_confirm(reserva)
+
     def _respuesta(self, reserva: Reserva) -> ReservaHoldData:
         sede = self._obtener_sede(reserva.sede_id)
         tz = self._obtener_timezone(sede)
@@ -102,6 +171,14 @@ class ReservaService:
             moneda=reserva.moneda or "COP",
         )
 
+    def _respuesta_confirm(self, reserva: Reserva) -> ReservaConfirmData:
+        return ReservaConfirmData(
+            reserva_id=reserva.id,
+            estado=reserva.estado,
+            total=float(reserva.total) if reserva.total is not None else 0.0,
+            moneda=reserva.moneda or "COP",
+        )
+
     def _buscar_por_clave(self, clave: str) -> Optional[Reserva]:
         if not clave:
             return None
@@ -110,6 +187,15 @@ class ReservaService:
             .filter(Reserva.clave_idempotencia == clave)
             .first()
         )
+
+    def _obtener_reserva(self, reserva_id: str) -> Reserva:
+        reserva = self.db.query(Reserva).filter(Reserva.id == reserva_id).first()
+        if not reserva:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail={"error": {"code": "RESERVA_NO_ENCONTRADA", "message": "Reserva no encontrada"}},
+            )
+        return reserva
 
     def _obtener_sede(self, sede_id: str) -> Sede:
         sede = self.db.query(Sede).filter(Sede.id == sede_id).first()
@@ -155,6 +241,12 @@ class ReservaService:
     def _parse_fecha_hora(self, fecha: str, hora: str, tz: ZoneInfo) -> datetime:
         return datetime.strptime(f"{fecha} {hora}", "%Y-%m-%d %H:%M").replace(tzinfo=tz)
 
+    def _parse_iso(self, value: str) -> datetime:
+        try:
+            return datetime.fromisoformat(value)
+        except ValueError:
+            return datetime.strptime(value, "%Y-%m-%dT%H:%M:%S")
+
     def _validar_en_horario(self, sede: Sede, hora_inicio: str, hora_fin: str, dia_semana: int) -> None:
         try:
             horarios = json.loads(sede.horario_apertura_json)
@@ -199,6 +291,7 @@ class ReservaService:
         hora_inicio: str,
         hora_fin: str,
         buffer_minutos: int,
+        exclude_reserva_id: Optional[str] = None,
     ) -> None:
         reservas = (
             self.db.query(Reserva)
@@ -213,6 +306,8 @@ class ReservaService:
         solicitud_inicio = self._hora_a_minutos(hora_inicio)
         solicitud_fin = self._hora_a_minutos(hora_fin)
         for reserva in reservas:
+            if exclude_reserva_id and reserva.id == exclude_reserva_id:
+                continue
             inicio = self._hora_a_minutos(reserva.hora_inicio) - buffer_minutos
             fin = self._hora_a_minutos(reserva.hora_fin) + buffer_minutos
             if solicitud_inicio < fin and solicitud_fin > inicio:
