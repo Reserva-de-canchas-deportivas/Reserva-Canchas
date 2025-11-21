@@ -76,6 +76,8 @@ class Reserva(Base):
     total = Column(Numeric(12, 2), nullable=True, comment="Total calculado para el HOLD")
     moneda = Column(String(3), nullable=True, default="COP", comment="Moneda del cobro")
     pago_capturado = Column(Boolean, nullable=False, default=False, comment="Indica si el pago fue capturado")
+    reprogramada_desde = Column(String(36), nullable=True, comment="ID de reserva origen si fue reprogramada")
+    reprogramada_a = Column(String(36), nullable=True, comment="ID de reserva destino si fue reprogramada")
     
     # Información adicional (básica)
     cliente_nombre = Column(

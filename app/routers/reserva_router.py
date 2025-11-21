@@ -11,6 +11,8 @@ from app.schemas.reserva import (
     ReservaConfirmResponse,
     ReservaCancelRequest,
     ReservaCancelResponse,
+    ReservaReprogramarRequest,
+    ReservaReprogramarResponse,
 )
 from app.services.reserva_service import ReservaService
 from app.services.rbac import require_role_dependency
@@ -84,3 +86,20 @@ async def cancelar_reserva(
     service = ReservaService(db)
     data = service.cancelar_reserva(reserva_id=reserva_id, payload=payload, usuario=current_user)
     return ReservaCancelResponse(mensaje="Reserva cancelada", data=data, success=True)
+
+
+@router.post(
+    "/{reserva_id}/reprogramar",
+    response_model=ReservaReprogramarResponse,
+    summary="Reprogramar reserva confirmada",
+    description="Operaci��n at��mica: marca la reserva original y crea una nueva confirmada con la franja solicitada.",
+)
+async def reprogramar_reserva(
+    reserva_id: str,
+    payload: ReservaReprogramarRequest,
+    db: Session = Depends(get_db),
+    current_user: Usuario = Depends(CLIENT_DEP),
+):
+    service = ReservaService(db)
+    data = service.reprogramar_reserva(reserva_id=reserva_id, payload=payload, usuario=current_user)
+    return ReservaReprogramarResponse(mensaje="Reserva reprogramada", data=data, success=True)
