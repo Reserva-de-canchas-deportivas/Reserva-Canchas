@@ -74,3 +74,36 @@ class ReservaCancelResponse(BaseModel):
     mensaje: str
     data: ReservaCancelData
     success: bool = True
+
+
+class ReservaReprogramarRequest(BaseModel):
+    fecha: date
+    hora_inicio: str = Field(..., pattern=r"^\d{2}:\d{2}$")
+    hora_fin: str = Field(..., pattern=r"^\d{2}:\d{2}$")
+    cancha_id: str | None = None
+
+    @field_validator("hora_fin")
+    @classmethod
+    def validar_horas(cls, v: str, info: ValidationInfo) -> str:
+        inicio = info.data.get("hora_inicio")
+        if inicio and v <= inicio:
+            raise ValueError("hora_fin debe ser mayor que hora_inicio")
+        return v
+
+
+class DiferenciaPrecio(BaseModel):
+    monto: float
+    moneda: str
+    tipo: str
+
+
+class ReservaReprogramarData(BaseModel):
+    reserva_original: str
+    reserva_nueva: str
+    diferencia: DiferenciaPrecio
+
+
+class ReservaReprogramarResponse(BaseModel):
+    mensaje: str
+    data: ReservaReprogramarData
+    success: bool = True

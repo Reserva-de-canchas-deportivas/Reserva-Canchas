@@ -22,6 +22,10 @@ from app.schemas.reserva import (
     ReservaConfirmData,
     ReservaCancelRequest,
     ReservaCancelData,
+    ReservaReprogramarRequest,
+    ReservaReprogramarResponse,
+    ReservaReprogramarData,
+    DiferenciaPrecio,
 )
 from app.services.tarifario_service import TarifarioService
 
@@ -197,6 +201,108 @@ class ReservaService:
         self.db.commit()
         self.db.refresh(reserva)
         return self._respuesta_cancel(reserva, monto, tipo)
+
+    def reprogramar_reserva(
+        self,
+        *,
+        reserva_id: str,
+        payload: ReservaReprogramarRequest,
+        usuario: Usuario,
+    ) -> ReservaReprogramarData:
+        original = self._obtener_reserva(reserva_id)
+        if original.estado != "confirmed":
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT,
+                detail={"error": {"code": "RESERVA_INVALIDA", "message": "Solo puedes reprogramar reservas confirmadas"}},
+            )
+        if original.usuario_id and usuario.rol == "cliente" and original.usuario_id != usuario.usuario_id:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail={"error": {"code": "FORBIDDEN", "message": "No puedes reprogramar esta reserva"}},
+            )
+
+        sede = self._obtener_sede(original.sede_id)
+        tz = self._obtener_timezone(sede)
+        inicio_original = datetime.strptime(f"{original.fecha} {original.hora_inicio}", "%Y-%m-%d %H:%M").replace(tzinfo=tz)
+        if inicio_original <= datetime.now(tz):
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT,
+                detail={"error": {"code": "NO_REPROGRAMABLE", "message": "La reserva ya inici�� o finaliz��"}},
+            )
+
+        nueva_cancha_id = payload.cancha_id or original.cancha_id
+        cancha = self._obtener_cancha(nueva_cancha_id)
+        self._validar_cancha_en_sede(cancha, sede)
+        self._validar_cancha_reservable(cancha)
+
+        nueva_fecha = payload.fecha.isoformat()
+        self._validar_en_horario(sede, payload.hora_inicio, payload.hora_fin, payload.fecha.weekday())
+        self._validar_solape(
+            cancha_id=cancha.id,
+            fecha=nueva_fecha,
+            hora_inicio=payload.hora_inicio,
+            hora_fin=payload.hora_fin,
+            buffer_minutos=sede.minutos_buffer,
+            exclude_reserva_id=original.id,
+        )
+
+        tarifa_nueva = self.tarifario_service.resolver_precio(
+            fecha=nueva_fecha,
+            hora_inicio=payload.hora_inicio,
+            hora_fin=payload.hora_fin,
+            sede_id=sede.id,
+            cancha_id=cancha.id,
+        )
+        total_nuevo = Decimal(tarifa_nueva.precio_por_bloque)
+        total_anterior = Decimal(original.total or 0)
+        diferencia = total_nuevo - total_anterior
+        if diferencia > 0:
+            tipo_diferencia = "cargo_adicional"
+        elif diferencia < 0:
+            tipo_diferencia = "reembolso_parcial"
+        else:
+            tipo_diferencia = "sin_cambio"
+
+        try:
+            tx = self.db.begin_nested() if self.db.in_transaction() else self.db.begin()
+            with tx:
+                original.estado = "reprogrammed"
+                original.activo = 0
+
+                nueva_reserva = Reserva(
+                    sede_id=sede.id,
+                    cancha_id=cancha.id,
+                    usuario_id=original.usuario_id,
+                    fecha=nueva_fecha,
+                    hora_inicio=payload.hora_inicio,
+                    hora_fin=payload.hora_fin,
+                    estado="confirmed",
+                    clave_idempotencia=None,
+                    confirm_idempotencia=None,
+                    total=total_nuevo,
+                    moneda=tarifa_nueva.moneda,
+                    pago_capturado=original.pago_capturado,
+                    reprogramada_desde=original.id,
+                )
+
+                self.db.add(nueva_reserva)
+                self.db.flush()
+
+                original.reprogramada_a = nueva_reserva.id
+                self.db.add(original)
+        except Exception:
+            self.db.rollback()
+            raise
+
+        self.db.refresh(original)
+        self.db.refresh(nueva_reserva)
+
+        diff_data = DiferenciaPrecio(monto=float(abs(diferencia)), moneda=tarifa_nueva.moneda or "COP", tipo=tipo_diferencia)
+        return ReservaReprogramarData(
+            reserva_original=original.id,
+            reserva_nueva=nueva_reserva.id,
+            diferencia=diff_data,
+        )
 
     def _respuesta(self, reserva: Reserva) -> ReservaHoldData:
         sede = self._obtener_sede(reserva.sede_id)
