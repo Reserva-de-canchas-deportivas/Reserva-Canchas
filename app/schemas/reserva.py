@@ -57,3 +57,20 @@ class ReservaConfirmResponse(BaseModel):
     mensaje: str
     data: ReservaConfirmData
     success: bool = True
+
+
+class ReservaCancelRequest(BaseModel):
+    motivo: str
+    clave_idempotencia: str | None = None
+
+
+class ReservaCancelData(BaseModel):
+    reserva_id: str
+    estado: str
+    reembolso: dict
+
+
+class ReservaCancelResponse(BaseModel):
+    mensaje: str
+    data: ReservaCancelData
+    success: bool = True

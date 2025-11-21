@@ -286,32 +286,73 @@ class TarifarioRepository:
 
 
 def seed_tarifas_demo(db: Session, sede_id: str, cancha_id: Optional[str]) -> None:
-    """Crear una tarifa de sede y una específica de cancha si no existen registros."""
-    if db.query(Tarifario).count() > 0:
-        return
+    """
+    Crear tarifas demo cubrir todas las franjas de la sede.
+    Si faltan franjas para algún día se insertan sin duplicar las existentes.
+    """
+    franjas_generales = {
+        0: ("08:00", "22:00", 110000),
+        1: ("08:00", "22:00", 110000),
+        2: ("08:00", "22:00", 120000),
+        3: ("08:00", "22:00", 120000),
+        4: ("08:00", "22:00", 130000),
+        5: ("09:00", "20:00", 140000),
+        6: ("09:00", "18:00", 130000),
+    }
 
-    tarifa_sede = Tarifario(
-        sede_id=sede_id,
-        cancha_id=None,
-        dia_semana=3,
-        hora_inicio="18:00",
-        hora_fin="22:00",
-        precio_por_bloque=120000,
-        moneda="COP",
-    )
-    db.add(tarifa_sede)
+    existentes_generales = {
+        fila.dia_semana
+        for fila in db.query(Tarifario.dia_semana)
+        .filter(
+            Tarifario.sede_id == sede_id,
+            Tarifario.cancha_id.is_(None),
+            Tarifario.activo == 1,
+        )
+    }
+
+    nuevas = False
+    for dia, (inicio, fin, precio) in franjas_generales.items():
+        if dia in existentes_generales:
+            continue
+        db.add(
+            Tarifario(
+                sede_id=sede_id,
+                cancha_id=None,
+                dia_semana=dia,
+                hora_inicio=inicio,
+                hora_fin=fin,
+                precio_por_bloque=precio,
+                moneda="COP",
+            )
+        )
+        nuevas = True
 
     if cancha_id:
-        tarifa_cancha = Tarifario(
-            sede_id=sede_id,
-            cancha_id=cancha_id,
-            dia_semana=3,
-            hora_inicio="18:00",
-            hora_fin="20:00",
-            precio_por_bloque=150000,
-            moneda="COP",
-        )
-        db.add(tarifa_cancha)
+        existentes_cancha = {
+            fila.dia_semana
+            for fila in db.query(Tarifario.dia_semana)
+            .filter(
+                Tarifario.sede_id == sede_id,
+                Tarifario.cancha_id == cancha_id,
+                Tarifario.activo == 1,
+            )
+        }
+        for dia, (inicio, fin, precio) in franjas_generales.items():
+            if dia in existentes_cancha:
+                continue
+            db.add(
+                Tarifario(
+                    sede_id=sede_id,
+                    cancha_id=cancha_id,
+                    dia_semana=dia,
+                    hora_inicio=inicio,
+                    hora_fin=fin,
+                    precio_por_bloque=precio + 15000,
+                    moneda="COP",
+                )
+            )
+            nuevas = True
 
-    db.commit()
-    logging.getLogger(__name__).info("Tarifas demo sembradas para sede %s", sede_id)
+    if nuevas:
+        db.commit()
+        logging.getLogger(__name__).info("Tarifas demo sembradas/actualizadas para sede %s", sede_id)

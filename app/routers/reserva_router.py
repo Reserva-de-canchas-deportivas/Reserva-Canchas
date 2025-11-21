@@ -1,10 +1,4 @@
-from fastapi import APIRouter, Depends, status
-from fastapi.responses import JSONResponse
-from sqlalchemy.orm import Session
-
-from app.database import get_db
-from app.domain.user_model import Usuario
-from fastapi import APIRouter, Depends, status
+from fastapi import APIRouter, Body, Depends, Query, status, HTTPException
 from fastapi.responses import JSONResponse
 from sqlalchemy.orm import Session
 
@@ -15,6 +9,8 @@ from app.schemas.reserva import (
     ReservaHoldRequest,
     ReservaConfirmRequest,
     ReservaConfirmResponse,
+    ReservaCancelRequest,
+    ReservaCancelResponse,
 )
 from app.services.reserva_service import ReservaService
 from app.services.rbac import require_role_dependency
@@ -56,3 +52,35 @@ async def confirmar_reserva(
     service = ReservaService(db)
     data = service.confirmar_reserva(reserva_id=reserva_id, payload=payload, usuario=current_user)
     return ReservaConfirmResponse(mensaje="Reserva confirmada", data=data, success=True)
+
+
+@router.post(
+    "/{reserva_id}/cancelar",
+    response_model=ReservaCancelResponse,
+    summary="Cancelar reserva",
+    description="Aplica la política de cancelación y genera solicitud de reembolso.",
+)
+async def cancelar_reserva(
+    reserva_id: str,
+    payload: ReservaCancelRequest | None = Body(None),
+    motivo: str | None = Query(None, description="Motivo de la cancelación"),
+    clave: str | None = Query(None, alias="clave_idempotencia"),
+    db: Session = Depends(get_db),
+    current_user: Usuario = Depends(CLIENT_DEP),
+):
+    if payload is None:
+        if not motivo:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail={
+                    "error": {
+                        "code": "MOTIVO_REQUERIDO",
+                        "message": "Debes enviar un motivo de cancelación (body JSON o query).",
+                    }
+                },
+            )
+        payload = ReservaCancelRequest(motivo=motivo, clave_idempotencia=clave)
+
+    service = ReservaService(db)
+    data = service.cancelar_reserva(reserva_id=reserva_id, payload=payload, usuario=current_user)
+    return ReservaCancelResponse(mensaje="Reserva cancelada", data=data, success=True)

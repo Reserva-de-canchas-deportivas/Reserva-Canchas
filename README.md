@@ -94,36 +94,59 @@ Authorization: Bearer <token cliente/personal/admin>
 ```
 
 ```powershell
+# Login
+$login = Invoke-RestMethod -Method Post `
+    -Uri http://localhost:8000/api/v1/auth/login `
+    -Body '{"correo":"admin@example.com","contrasena":"admin123"}' `
+    -ContentType "application/json"
+$headers = @{ Authorization = "Bearer $($login.data.access_token)" }
+
+# IDs demo
+$sedes = Invoke-RestMethod -Method Get -Uri http://localhost:8000/api/v1/sedes/ -Headers $headers
+$sedeId = $sedes.data.sedes[0].sede_id
+$canchas = Invoke-RestMethod -Method Get -Uri "http://localhost:8000/api/v1/sedes/$sedeId/canchas/" -Headers $headers
+$canchaId = $canchas.data.canchas[0].cancha_id
+
+# Crear HOLD (>24h)
+$holdBody = @{
+    sede_id = $sedeId
+    cancha_id = $canchaId
+    fecha = "2025-07-31"
+    hora_inicio = "18:00"
+    hora_fin = "19:00"
+    clave_idempotencia = "HOLD-001"
+} | ConvertTo-Json -Compress
 $holdResponse = Invoke-RestMethod -Method Post `
     -Uri http://localhost:8000/api/v1/reservas `
     -Headers $headers -ContentType "application/json" `
-    -Body "{
-        \"sede_id\": \"$sedeId\",
-        \"cancha_id\": \"$canchaId\",
-        \"fecha\": \"2025-07-31\",
-        \"hora_inicio\": \"18:00\",
-        \"hora_fin\": \"19:00\",
-        \"clave_idempotencia\": \"HOLD-001\"
-    }"
+    -Body $holdBody
 $reservaId = $holdResponse.data.reserva_id
 
+# Confirmar
 Invoke-RestMethod -Method Post `
     -Uri "http://localhost:8000/api/v1/reservas/$reservaId/confirmar" `
     -Headers $headers -ContentType "application/json" `
     -Body '{ "clave_idempotencia": "CONFIRM-001" }'
-```
 
-- Solo se permiten reservas en estado `hold` o `pending`. Si `vence_hold` expiró, retorna `410 HOLD_EXPIRADO`.
-- Si `settings.require_payment_capture = True` y `pago_capturado` es falso, retorna `402 PAGO_REQUERIDO`.
-- Idempotencia: confirmar dos veces devuelve 200 con la misma `reserva_id` y estado.
-- Respuesta exitosa:
-  ```json
-  {
-    "mensaje": "Reserva confirmada",
-    "data": { "reserva_id": "uuid", "estado": "confirmed", "total": 150000, "moneda": "COP" },
-    "success": true
-  }
-  ```
+# Cancelar e idempotencia
+$cancelBody = @{
+    motivo = "Cliente no asistirá"
+    clave_idempotencia = "CANCEL-001"
+} | ConvertTo-Json -Compress
+Invoke-RestMethod -Method Post `
+    -Uri "http://localhost:8000/api/v1/reservas/$reservaId/cancelar" `
+    -Headers $headers -ContentType "application/json" `
+    -Body $cancelBody
+Invoke-RestMethod -Method Post `
+    -Uri "http://localhost:8000/api/v1/reservas/$reservaId/cancelar" `
+    -Headers $headers -ContentType "application/json" `
+    -Body $cancelBody
+
+# Alternativa sin body JSON: ?motivo=...&clave_idempotencia=...
+Invoke-RestMethod -Method Post `
+    -Uri "http://localhost:8000/api/v1/reservas/$reservaId/cancelar?motivo=Cliente%20no%20asistira&clave_idempotencia=CANCEL-QUERY"` `
+    -Headers $headers
+```
 
 # Comandos GIT
 # Comandos GIT
