@@ -137,8 +137,12 @@ class TarifarioUpdate(BaseModel):
 
 class TarifarioResponse(BaseModel):
     """Schema de respuesta de tarifa"""
-    
-    tarifa_id: str
+
+    tarifa_id: str = Field(
+        validation_alias="id",
+        serialization_alias="tarifa_id",
+        description="Identificador único de la tarifa",
+    )
     sede_id: str
     cancha_id: Optional[str]
     dia_semana: int
@@ -149,8 +153,8 @@ class TarifarioResponse(BaseModel):
     created_at: str
     updated_at: str
     activo: bool
-    
-    model_config = ConfigDict(from_attributes=True)
+
+    model_config = ConfigDict(from_attributes=True, populate_by_name=True)
 
 
 class TarifarioListResponse(BaseModel):

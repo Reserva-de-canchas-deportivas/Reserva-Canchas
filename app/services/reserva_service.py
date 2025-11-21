@@ -20,6 +20,8 @@ from app.schemas.reserva import (
     ReservaHoldRequest,
     ReservaConfirmRequest,
     ReservaConfirmData,
+    ReservaCancelRequest,
+    ReservaCancelData,
 )
 from app.services.tarifario_service import TarifarioService
 
@@ -154,6 +156,48 @@ class ReservaService:
         self.db.refresh(reserva)
         return self._respuesta_confirm(reserva)
 
+    def cancelar_reserva(
+        self,
+        *,
+        reserva_id: str,
+        payload: ReservaCancelRequest,
+        usuario: Usuario,
+    ) -> ReservaCancelData:
+        reserva = self._obtener_reserva(reserva_id)
+        if reserva.estado == "cancelled":
+            return self._respuesta_cancel(reserva, 0.0, "sin_reembolso")
+        if reserva.estado not in {"confirmed", "hold", "pending"}:
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT,
+                detail={"error": {"code": "NO_CANCELABLE", "message": "La reserva no puede cancelarse"}},
+            )
+
+        sede = self._obtener_sede(reserva.sede_id)
+        tz = self._obtener_timezone(sede)
+        inicio_dt = datetime.strptime(f"{reserva.fecha} {reserva.hora_inicio}", "%Y-%m-%d %H:%M").replace(tzinfo=tz)
+        if inicio_dt <= datetime.now(tz):
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT,
+                detail={"error": {"code": "NO_CANCELABLE", "message": "La reserva ya inició o finalizó"}},
+            )
+
+        horas_restantes = (inicio_dt - datetime.now(tz)).total_seconds() / 3600
+        if horas_restantes >= settings.cancel_full_refund_hours:
+            monto = float(reserva.total or 0.0)
+            tipo = "total"
+        else:
+            porcentaje = settings.cancel_partial_percentage / 100
+            monto = float(reserva.total or 0.0) * porcentaje
+            tipo = "parcial" if monto > 0 else "sin_reembolso"
+
+        reserva.estado = "cancelled"
+        if payload.clave_idempotencia:
+            reserva.cancel_idempotencia = payload.clave_idempotencia
+        self.db.add(reserva)
+        self.db.commit()
+        self.db.refresh(reserva)
+        return self._respuesta_cancel(reserva, monto, tipo)
+
     def _respuesta(self, reserva: Reserva) -> ReservaHoldData:
         sede = self._obtener_sede(reserva.sede_id)
         tz = self._obtener_timezone(sede)
@@ -177,6 +221,13 @@ class ReservaService:
             estado=reserva.estado,
             total=float(reserva.total) if reserva.total is not None else 0.0,
             moneda=reserva.moneda or "COP",
+        )
+
+    def _respuesta_cancel(self, reserva: Reserva, monto: float, tipo: str) -> ReservaCancelData:
+        return ReservaCancelData(
+            reserva_id=reserva.id,
+            estado=reserva.estado,
+            reembolso={"monto": monto, "moneda": reserva.moneda or "COP", "tipo": tipo},
         )
 
     def _buscar_por_clave(self, clave: str) -> Optional[Reserva]:

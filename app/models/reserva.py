@@ -72,6 +72,7 @@ class Reserva(Base):
     vence_hold = Column(String(50), nullable=True, comment="Fecha/hora en que expira el HOLD")
     clave_idempotencia = Column(String(120), unique=True, nullable=True, comment="Clave idempotente para evitar duplicados")
     confirm_idempotencia = Column(String(120), nullable=True, comment="Clave idempotente para confirmar")
+    cancel_idempotencia = Column(String(120), nullable=True, comment="Clave idempotente para cancelar")
     total = Column(Numeric(12, 2), nullable=True, comment="Total calculado para el HOLD")
     moneda = Column(String(3), nullable=True, default="COP", comment="Moneda del cobro")
     pago_capturado = Column(Boolean, nullable=False, default=False, comment="Indica si el pago fue capturado")
@@ -140,6 +141,7 @@ class Reserva(Base):
             "moneda": self.moneda,
             "clave_idempotencia": self.clave_idempotencia,
             "confirm_idempotencia": self.confirm_idempotencia,
+            "cancel_idempotencia": self.cancel_idempotencia,
             "pago_capturado": bool(self.pago_capturado),
             "cliente_nombre": self.cliente_nombre,
             "cliente_email": self.cliente_email,
