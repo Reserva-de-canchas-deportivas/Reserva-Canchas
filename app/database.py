@@ -3,6 +3,7 @@ from sqlalchemy.orm import sessionmaker, Session
 from sqlalchemy.pool import StaticPool
 
 from app.domain.user_model import Base  # noqa: F401
+from app.domain.profile_model import Perfil  # noqa: F401
 from app.models.sede import Sede  # noqa: F401
 from app.models.cancha import Cancha  # noqa: F401
 from app.models.tarifario import Tarifario  # noqa: F401

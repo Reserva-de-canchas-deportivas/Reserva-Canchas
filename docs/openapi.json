@@ -2329,6 +2329,168 @@
         }
       }
     },
+    "/api/v1/perfil": {
+      "get": {
+        "tags": [
+          "Perfil"
+        ],
+        "summary": "Obtener perfil del usuario autenticado",
+        "operationId": "obtener_perfil_api_v1_perfil_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PerfilResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      },
+      "patch": {
+        "tags": [
+          "Perfil"
+        ],
+        "summary": "Actualizar preferencias de perfil",
+        "operationId": "actualizar_perfil_api_v1_perfil_patch",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PerfilUpdate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PerfilResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/perfil/mfa/activar": {
+      "post": {
+        "tags": [
+          "Perfil"
+        ],
+        "summary": "Activar MFA para el usuario autenticado",
+        "operationId": "activar_mfa_api_v1_perfil_mfa_activar_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MFAActivateRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MFAActivateResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/perfil/mfa/verificar": {
+      "post": {
+        "tags": [
+          "Perfil"
+        ],
+        "summary": "Verificar codigo MFA",
+        "operationId": "verificar_mfa_api_v1_perfil_mfa_verificar_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MFAVerifyRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MFAVerifyResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
     "/": {
       "get": {
         "summary": "Root",
@@ -2817,6 +2979,173 @@
           "contrasena"
         ],
         "title": "LoginRequest"
+      },
+      "MFAActivateRequest": {
+        "properties": {
+          "metodo": {
+            "type": "string",
+            "title": "Metodo",
+            "default": "totp",
+            "examples": [
+              "totp"
+            ]
+          }
+        },
+        "type": "object",
+        "title": "MFAActivateRequest"
+      },
+      "MFAActivateResponse": {
+        "properties": {
+          "mensaje": {
+            "type": "string",
+            "title": "Mensaje"
+          },
+          "data": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Data"
+          },
+          "success": {
+            "type": "boolean",
+            "title": "Success",
+            "default": true
+          }
+        },
+        "type": "object",
+        "required": [
+          "mensaje",
+          "data"
+        ],
+        "title": "MFAActivateResponse"
+      },
+      "MFAVerifyRequest": {
+        "properties": {
+          "codigo": {
+            "type": "string",
+            "maxLength": 10,
+            "minLength": 4,
+            "title": "Codigo"
+          }
+        },
+        "type": "object",
+        "required": [
+          "codigo"
+        ],
+        "title": "MFAVerifyRequest"
+      },
+      "MFAVerifyResponse": {
+        "properties": {
+          "mensaje": {
+            "type": "string",
+            "title": "Mensaje"
+          },
+          "data": {
+            "$ref": "#/components/schemas/PerfilData"
+          },
+          "success": {
+            "type": "boolean",
+            "title": "Success",
+            "default": true
+          }
+        },
+        "type": "object",
+        "required": [
+          "mensaje",
+          "data"
+        ],
+        "title": "MFAVerifyResponse"
+      },
+      "PerfilData": {
+        "properties": {
+          "idioma": {
+            "type": "string",
+            "title": "Idioma",
+            "default": "es",
+            "examples": [
+              "es",
+              "en"
+            ]
+          },
+          "notificaciones_correo": {
+            "type": "boolean",
+            "title": "Notificaciones Correo",
+            "default": true
+          },
+          "mfa_habilitado": {
+            "type": "boolean",
+            "title": "Mfa Habilitado",
+            "default": false
+          },
+          "mfa_metodo": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Mfa Metodo"
+          }
+        },
+        "type": "object",
+        "title": "PerfilData"
+      },
+      "PerfilResponse": {
+        "properties": {
+          "mensaje": {
+            "type": "string",
+            "title": "Mensaje"
+          },
+          "data": {
+            "$ref": "#/components/schemas/PerfilData"
+          },
+          "success": {
+            "type": "boolean",
+            "title": "Success",
+            "default": true
+          }
+        },
+        "type": "object",
+        "required": [
+          "mensaje",
+          "data"
+        ],
+        "title": "PerfilResponse"
+      },
+      "PerfilUpdate": {
+        "properties": {
+          "idioma": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 8,
+                "minLength": 2
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Idioma",
+            "examples": [
+              "es",
+              "en"
+            ]
+          },
+          "notificaciones_correo": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Notificaciones Correo"
+          }
+        },
+        "type": "object",
+        "title": "PerfilUpdate"
       },
       "ReservaApiResponse": {
         "properties": {
