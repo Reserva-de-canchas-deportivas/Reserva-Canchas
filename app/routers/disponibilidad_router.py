@@ -92,13 +92,28 @@ def consultar_disponibilidad(
         f"sede={sede_id}, cancha={cancha_id}, slot={duracion_slot}min"
     )
 
-    # Validar parámetros con Pydantic
-    query_params = DisponibilidadQuery(
-        fecha=fecha, sede_id=sede_id, cancha_id=cancha_id, duracion_slot=duracion_slot
-    )
-
-    # Calcular disponibilidad
-    disponibilidad = service.calcular_disponibilidad(query_params)
+    try:
+        query_params = DisponibilidadQuery(
+            fecha=fecha,
+            sede_id=sede_id,
+            cancha_id=cancha_id,
+            duracion_slot=duracion_slot,
+        )
+        disponibilidad = service.calcular_disponibilidad(query_params)
+    except ValueError as e:
+        logger.error(f"Error de validación en disponibilidad: {e}")
+        raise HTTPException(
+            status_code=400,
+            detail={"error": {"code": "VALIDATION_ERROR", "message": str(e)}},
+        )
+    except HTTPException as exc:
+        raise exc
+    except Exception as e:
+        logger.exception("Error interno al calcular disponibilidad")
+        raise HTTPException(
+            status_code=500,
+            detail={"error": {"code": "INTERNAL_ERROR", "message": str(e)}},
+        )
 
     # Determinar mensaje apropiado
     if disponibilidad.dia_cerrado:
