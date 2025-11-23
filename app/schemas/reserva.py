@@ -107,3 +107,14 @@ class ReservaReprogramarResponse(BaseModel):
     mensaje: str
     data: ReservaReprogramarData
     success: bool = True
+
+
+class ReservaCleanData(BaseModel):
+    expiradas: int
+    ejecutado_en: str
+
+
+class ReservaCleanResponse(BaseModel):
+    mensaje: str
+    data: ReservaCleanData
+    success: bool = True

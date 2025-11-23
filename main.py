@@ -4,6 +4,7 @@ import logging
 import os
 import sys
 import time
+import asyncio
 from contextvars import ContextVar
 from uuid import uuid4
 
@@ -17,6 +18,7 @@ from starlette.middleware.base import BaseHTTPMiddleware
 from app.config.routers import include_routers
 from app.database import SessionLocal, init_db
 from app.soap.soap_config import get_soap_info, setup_soap_services
+from app.services.reserva_service import ReservaService
 
 request_id_ctx_var: ContextVar[str] = ContextVar("request_id", default="-")
 start_time = time.time()
@@ -215,6 +217,24 @@ async def docs_info():
         },
         "success": True,
     }
+
+
+# Scheduler simple para expirar HOLDs
+async def _hold_cleaner_loop(interval_seconds: int = 60) -> None:
+    while True:
+        try:
+            with SessionLocal() as db:
+                ReservaService(db).expirar_holds_vencidos()
+        except Exception as exc:
+            logging.getLogger(__name__).warning("Error en limpieza de HOLD: %s", exc)
+        await asyncio.sleep(interval_seconds)
+
+
+@app.on_event("startup")
+async def start_hold_cleaner() -> None:
+    import asyncio
+
+    asyncio.create_task(_hold_cleaner_loop(60))
 
 
 def _export_openapi(path: str) -> None:  # pragma: no cover

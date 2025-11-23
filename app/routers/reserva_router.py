@@ -13,12 +13,14 @@ from app.schemas.reserva import (
     ReservaCancelResponse,
     ReservaReprogramarRequest,
     ReservaReprogramarResponse,
+    ReservaCleanResponse,
 )
 from app.services.reserva_service import ReservaService
 from app.services.rbac import require_role_dependency
 
 router = APIRouter(prefix="/api/v1/reservas", tags=["Reservas"])
 CLIENT_DEP = require_role_dependency("cliente", "personal", "admin")
+ADMIN_DEP = require_role_dependency("admin", "personal")
 
 
 @router.post(
@@ -110,4 +112,21 @@ async def reprogramar_reserva(
     )
     return ReservaReprogramarResponse(
         mensaje="Reserva reprogramada", data=data, success=True
+    )
+
+
+@router.post(
+    "/holds/clean",
+    response_model=ReservaCleanResponse,
+    summary="Ejecutar limpieza de HOLD expirados",
+    description="Endpoint administrativo para forzar la expiraci��n de HOLD vencidos.",
+)
+async def limpiar_holds_expirados(
+    db: Session = Depends(get_db),
+    _: Usuario = Depends(ADMIN_DEP),
+):
+    service = ReservaService(db)
+    data = service.expirar_holds_vencidos()
+    return ReservaCleanResponse(
+        mensaje="Limpieza de HOLD ejecutada", data=data, success=True
     )
