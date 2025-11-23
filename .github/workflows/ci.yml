@@ -109,6 +109,14 @@ jobs:
           artifacts.mkdir(exist_ok=True)
           artifacts.joinpath("openapi.json").write_text(json.dumps(spec, indent=2))
           PY
+      - name: Check OpenAPI diff
+        run: |
+          if [ -f docs/openapi.json ]; then
+            diff -u docs/openapi.json artifacts/openapi.json
+          else
+            echo "docs/openapi.json missing; please commit baseline."
+            exit 1
+          fi
       - name: Build CI report
         env:
           IMAGE_TAG: ${{ env.IMAGE_TAG }}

@@ -1,9 +1,11 @@
 """
-Router SOAP Manual para Facturación
+Router SOAP Manual para Facturacion
 """
 
-from fastapi import APIRouter, Response, Request, Depends
 import logging
+
+from fastapi import APIRouter, Depends, Request, Response
+
 from app.services.api_key_guard import require_api_key
 
 logger = logging.getLogger(__name__)
@@ -12,8 +14,8 @@ billing_soap_router = APIRouter(prefix="/soap/billing", tags=["SOAP - Billing"])
 
 
 @billing_soap_router.get("")
-async def get_billing_wsdl(api_key=Depends(require_api_key)):
-    """Retornar WSDL para BillingService"""
+async def get_billing_wsdl():
+    """Retornar WSDL para BillingService (publico para consulta de contrato)"""
     wsdl = """<?xml version="1.0" encoding="UTF-8"?>
 <definitions xmlns="http://schemas.xmlsoap.org/wsdl/"
              xmlns:soap="http://schemas.xmlsoap.org/wsdl/soap/"
@@ -30,12 +32,12 @@ async def get_billing_wsdl(api_key=Depends(require_api_key)):
 
 @billing_soap_router.post("")
 async def handle_billing_soap(request: Request, api_key=Depends(require_api_key)):
-    """Manejar requests SOAP de facturación"""
+    """Manejar requests SOAP de facturacion"""
     response_xml = """<?xml version="1.0" encoding="UTF-8"?>
 <soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/">
     <soap:Body>
         <Response>
-            <mensaje>Servicio de facturación disponible</mensaje>
+            <mensaje>Servicio de facturacion disponible</mensaje>
         </Response>
     </soap:Body>
 </soap:Envelope>"""

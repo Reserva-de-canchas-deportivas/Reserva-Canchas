@@ -7,7 +7,7 @@ from datetime import datetime, timedelta
 import logging
 import xml.etree.ElementTree as ET
 
-from fastapi import APIRouter, Depends, Request, Response
+from fastapi import APIRouter, Depends, Request, Response, status
 
 from app.services.api_key_guard import require_api_key
 
@@ -17,8 +17,8 @@ auth_soap_router = APIRouter(prefix="/soap/auth", tags=["SOAP - Auth"])
 
 
 @auth_soap_router.get("")
-async def get_auth_wsdl(api_key=Depends(require_api_key)) -> Response:
-    """Retorna WSDL para AuthService."""
+async def get_auth_wsdl() -> Response:
+    """Retorna WSDL para AuthService (publico para consulta de contrato)."""
     wsdl = """<?xml version="1.0" encoding="UTF-8"?>
 <definitions xmlns="http://schemas.xmlsoap.org/wsdl/"
              xmlns:soap="http://schemas.xmlsoap.org/wsdl/soap/"
@@ -141,4 +141,8 @@ async def handle_auth_soap(
     </soap:Body>
 </soap:Envelope>"""
 
-        return Response(content=fault_xml, media_type="text/xml", status_code=500)
+        return Response(
+            content=fault_xml,
+            media_type="text/xml",
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+        )
