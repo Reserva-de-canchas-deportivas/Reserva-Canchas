@@ -1,12 +1,14 @@
 """
-Router SOAP Manual para Autenticación
+Router SOAP Manual para Autenticacion
 Sin dependencia de fastapi-soap (tiene bugs)
 """
 
-from fastapi import APIRouter, Response, Request, Depends
 from datetime import datetime, timedelta
 import logging
 import xml.etree.ElementTree as ET
+
+from fastapi import APIRouter, Depends, Request, Response
+
 from app.services.api_key_guard import require_api_key
 
 logger = logging.getLogger(__name__)
@@ -15,8 +17,8 @@ auth_soap_router = APIRouter(prefix="/soap/auth", tags=["SOAP - Auth"])
 
 
 @auth_soap_router.get("")
-async def get_auth_wsdl(api_key=Depends(require_api_key)):
-    """Retornar WSDL para AuthService"""
+async def get_auth_wsdl(api_key=Depends(require_api_key)) -> Response:
+    """Retorna WSDL para AuthService."""
     wsdl = """<?xml version="1.0" encoding="UTF-8"?>
 <definitions xmlns="http://schemas.xmlsoap.org/wsdl/"
              xmlns:soap="http://schemas.xmlsoap.org/wsdl/soap/"
@@ -68,7 +70,7 @@ async def get_auth_wsdl(api_key=Depends(require_api_key)):
             <input><soap:body use="literal"/></input>
             <output><soap:body use="literal"/></output>
         </operation>
-    # </binding>
+    </binding>
     
     <service name="AuthService">
         <port name="AuthServicePort" binding="tns:AuthServiceBinding">
@@ -76,46 +78,41 @@ async def get_auth_wsdl(api_key=Depends(require_api_key)):
         </port>
     </service>
 </definitions>"""
-    
     return Response(content=wsdl, media_type="application/xml")
 
 
 @auth_soap_router.post("")
-async def handle_auth_soap(request: Request, api_key=Depends(require_api_key)):
-    """Manejar requests SOAP de autenticación"""
+async def handle_auth_soap(
+    request: Request, api_key=Depends(require_api_key)
+) -> Response:
+    """Procesa solicitudes SOAP de login."""
     try:
-        body = await request.body()
-        body_str = body.decode('utf-8')
-        
-        logger.info(f"SOAP Auth request received")
-        
-        # Parsear XML
+        body_str = (await request.body()).decode("utf-8")
+        logger.info("SOAP Auth request received")
+
         root = ET.fromstring(body_str)
-        
-        # Buscar Username y Password
         username = None
         password = None
-        
+
         for elem in root.iter():
-            if 'Username' in elem.tag:
+            if "Username" in elem.tag:
                 username = elem.text
-            elif 'Password' in elem.tag:
+            elif "Password" in elem.tag:
                 password = elem.text
-        
-        logger.info(f"Login attempt for user: {username}")
-        
-        # Generar respuesta
+
+        logger.info("Login attempt for user: %s", username)
+
         if username and password:
             token = f"soap_token_{username}_{datetime.utcnow().timestamp()}"
             expires = (datetime.utcnow() + timedelta(hours=24)).isoformat()
             success = "true"
-            message = "Autenticación exitosa"
+            message = "Autenticacion exitosa"
         else:
             token = ""
             expires = datetime.utcnow().isoformat()
             success = "false"
-            message = "Credenciales inválidas"
-        
+            message = "Credenciales invalidas"
+
         response_xml = f"""<?xml version="1.0" encoding="UTF-8"?>
 <soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/"
                xmlns:tns="http://miempresa.com/soap/v1/auth">
@@ -128,20 +125,20 @@ async def handle_auth_soap(request: Request, api_key=Depends(require_api_key)):
         </tns:LoginResponse>
     </soap:Body>
 </soap:Envelope>"""
-        
+
         return Response(content=response_xml, media_type="text/xml")
-        
-    except Exception as e:
-        logger.error(f"Error processing SOAP request: {e}", exc_info=True)
-        
+
+    except Exception as exc:  # noqa: BLE001
+        logger.error("Error processing SOAP request: %s", exc, exc_info=True)
+
         fault_xml = f"""<?xml version="1.0" encoding="UTF-8"?>
 <soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/">
     <soap:Body>
         <soap:Fault>
             <faultcode>soap:Server</faultcode>
-            <faultstring>Error interno: {str(e)}</faultstring>
+            <faultstring>Error interno: {str(exc)}</faultstring>
         </soap:Fault>
     </soap:Body>
 </soap:Envelope>"""
-        
+
         return Response(content=fault_xml, media_type="text/xml", status_code=500)

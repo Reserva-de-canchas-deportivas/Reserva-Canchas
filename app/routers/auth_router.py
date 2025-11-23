@@ -20,6 +20,7 @@ router = APIRouter(prefix="/api/v1/auth", tags=["auth"])
 def on_startup_seed():
     # Seed demo users at startup
     from app.database import SessionLocal, init_db
+
     init_db(create_all=True)
     with SessionLocal() as db:
         seed_users(db)
@@ -32,7 +33,9 @@ def on_startup_seed():
 
 @router.post("/login", response_model=ApiResponse)
 def login(payload: LoginRequest, db: Session = Depends(get_db)):
-    user = auth_service.authenticate_user(db, payload.correo, payload.telefono, payload.contrasena)
+    user = auth_service.authenticate_user(
+        db, payload.correo, payload.telefono, payload.contrasena
+    )
     if not user:
         raise unauthorized_error("Credenciales inválidas", code="INVALID_CREDENTIALS")
 
@@ -42,7 +45,9 @@ def login(payload: LoginRequest, db: Session = Depends(get_db)):
     access_token, refresh_token, exp_s = auth_service.issue_tokens_for_user(user)
     return ApiResponse(
         mensaje="Login exitoso",
-        data=TokensData(access_token=access_token, refresh_token=refresh_token, expira_en_seg=exp_s),
+        data=TokensData(
+            access_token=access_token, refresh_token=refresh_token, expira_en_seg=exp_s
+        ),
         success=True,
     )
 
@@ -65,12 +70,19 @@ def refresh(credentials: HTTPAuthorizationCredentials = Depends(HTTPBearer())):
 
     # Re-issue new tokens
     from app.auth.jwt_utils import create_token
-    access_token, exp_s = create_token(subject=subject, token_type="access", extra_claims={"role": role})
-    new_refresh, _ = create_token(subject=subject, token_type="refresh", extra_claims={"role": role})
+
+    access_token, exp_s = create_token(
+        subject=subject, token_type="access", extra_claims={"role": role}
+    )
+    new_refresh, _ = create_token(
+        subject=subject, token_type="refresh", extra_claims={"role": role}
+    )
 
     return ApiResponse(
         mensaje="Tokens renovados",
-        data=TokensData(access_token=access_token, refresh_token=new_refresh, expira_en_seg=exp_s),
+        data=TokensData(
+            access_token=access_token, refresh_token=new_refresh, expira_en_seg=exp_s
+        ),
         success=True,
     )
 

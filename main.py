@@ -1,17 +1,18 @@
+import logging
+import os
+import time
+from contextvars import ContextVar
+from uuid import uuid4
+
 from fastapi import FastAPI
 from fastapi.responses import JSONResponse
-from starlette.middleware.base import BaseHTTPMiddleware
-from uuid import uuid4
-import logging
-import time
-import os
-from contextvars import ContextVar
-from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy import text
+from sqlalchemy.exc import SQLAlchemyError
+from starlette.middleware.base import BaseHTTPMiddleware
 
 from app.config.routers import include_routers
-from app.soap.soap_config import setup_soap_services, get_soap_info
 from app.database import SessionLocal, init_db
+from app.soap.soap_config import get_soap_info, setup_soap_services
 
 request_id_ctx_var: ContextVar[str] = ContextVar("request_id", default="-")
 start_time = time.time()
@@ -44,42 +45,61 @@ def configure_logging() -> None:
     root.handlers = [handler]
 
 
-def configure_tracing(app: FastAPI) -> None:
+def configure_tracing(app: FastAPI) -> None:  # pragma: no cover
+    if os.getenv("DISABLE_TRACING") == "1":
+        return
+
     try:
         from opentelemetry import trace
         from opentelemetry.instrumentation.fastapi import FastAPIInstrumentor
         from opentelemetry.sdk.resources import Resource
         from opentelemetry.sdk.trace import TracerProvider
-        from opentelemetry.sdk.trace.export import BatchSpanProcessor, ConsoleSpanExporter
+        from opentelemetry.sdk.trace.export import (
+            BatchSpanProcessor,
+            ConsoleSpanExporter,
+        )
+
         try:
-            from opentelemetry.exporter.otlp.proto.http.trace_exporter import OTLPSpanExporter
+            from opentelemetry.exporter.otlp.proto.http.trace_exporter import (
+                OTLPSpanExporter,
+            )
+
             otlp_endpoint = os.getenv("OTEL_EXPORTER_OTLP_ENDPOINT")
-            exporter = OTLPSpanExporter(endpoint=otlp_endpoint) if otlp_endpoint else ConsoleSpanExporter()
+            exporter = (
+                OTLPSpanExporter(endpoint=otlp_endpoint)
+                if otlp_endpoint
+                else ConsoleSpanExporter()
+            )
         except Exception:
             exporter = ConsoleSpanExporter()
 
-        resource = Resource.create({"service.name": os.getenv("OTEL_SERVICE_NAME", "reserva-canchas-api")})
+        resource = Resource.create(
+            {"service.name": os.getenv("OTEL_SERVICE_NAME", "reserva-canchas-api")}
+        )
         provider = TracerProvider(resource=resource)
         provider.add_span_processor(BatchSpanProcessor(exporter))
         trace.set_tracer_provider(provider)
         FastAPIInstrumentor.instrument_app(app)
     except ImportError:
-        logging.getLogger(__name__).warning("OpenTelemetry no disponible; trazas deshabilitadas")
+        logging.getLogger(__name__).warning(
+            "OpenTelemetry no disponible; trazas deshabilitadas"
+        )
 
 
-def configure_metrics(app: FastAPI) -> None:
+def configure_metrics(app: FastAPI) -> None:  # pragma: no cover
     try:
         from prometheus_fastapi_instrumentator import Instrumentator
-        Instrumentator().instrument(app).expose(app, include_in_schema=False, endpoint="/metrics")
-    except ImportError:
-        logging.getLogger(__name__).warning("prometheus-fastapi-instrumentator no disponible; /metrics deshabilitado")
 
-# Crear la instancia de FastAPI
-app = FastAPI(
-    title="Mi API con FastAPI",
-    description="API RESTful profesional",
-    version="1.0.0"
-)
+        Instrumentator().instrument(app).expose(
+            app, include_in_schema=False, endpoint="/metrics"
+        )
+    except ImportError:
+        logging.getLogger(__name__).warning(
+            "prometheus-fastapi-instrumentator no disponible; /metrics deshabilitado"
+        )
+
+
+app = FastAPI(title="Reserva Canchas API", description="API REST", version="1.0.0")
 
 # Inicializar DB en memoria al arranque (para health/readiness)
 init_db(create_all=True)
@@ -96,27 +116,23 @@ setup_soap_services(app)
 # Incluir routers REST
 include_routers(app)
 
-# Ruta raíz
+
 @app.get("/")
 async def root():
-    """Endpoint de bienvenida"""
+    """Endpoint de bienvenida."""
     return {
-        "message": "¡Bienvenido a mi API con FastAPI!",
+        "message": "Bienvenido a mi API con FastAPI!",
         "status": "online",
-        "version": "1.0.0"
+        "version": "1.0.0",
     }
 
-# Endpoint con parámetros
+
 @app.get("/items/{item_id}")
-async def read_item(item_id: int, q: str = None):
-    """Ejemplo con parámetros de ruta y query"""
-    return {
-        "item_id": item_id,
-        "query": q
-    }
+async def read_item(item_id: int, q: str | None = None):
+    """Ejemplo con parametros de ruta y query."""
+    return {"item_id": item_id, "query": q}
 
 
-# Health check completo
 @app.get("/health")
 async def health_check():
     """Verifica estado general (DB) y uptime (liveness + readiness ligera)."""
@@ -134,21 +150,18 @@ async def health_check():
 
     return {
         "mensaje": "OK" if success else "DEGRADED",
-        "data": {
-            "db": db_state,
-            "cache": cache_state,
-            "uptime_seg": uptime,
-        },
+        "data": {"db": db_state, "cache": cache_state, "uptime_seg": uptime},
         "success": success,
     }
 
-# Información SOAP
+
 @app.get("/soap/info")
 async def soap_info():
-    """Información sobre servicios SOAP disponibles"""
+    """Informacion sobre servicios SOAP disponibles."""
     return JSONResponse(content=get_soap_info())
 
 
 if __name__ == "__main__":
     import uvicorn
+
     uvicorn.run("main:app", host="0.0.0.0", port=8000, reload=True)

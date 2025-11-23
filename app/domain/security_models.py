@@ -19,7 +19,9 @@ class ApiKey(Base):
     prefix = Column(String(12), nullable=False, index=True)
     last_four = Column(String(4), nullable=False)
     description = Column(String(255), nullable=True)
-    expires_at = Column(DateTime, nullable=False, default=lambda: datetime.utcnow() + timedelta(days=90))
+    expires_at = Column(
+        DateTime, nullable=False, default=lambda: datetime.utcnow() + timedelta(days=90)
+    )
     usage_limit = Column(Integer, nullable=True)  # Null == ilimitado
     usage_count = Column(Integer, nullable=False, default=0)
     is_active = Column(Boolean, nullable=False, default=True)
@@ -42,7 +44,9 @@ class SecurityAuditLog(Base):
     __tablename__ = "security_audit_logs"
 
     id = Column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
-    event_type = Column(String(50), nullable=False)  # e.g. TOKEN_OK, TOKEN_EXPIRED, API_KEY_INVALID
+    event_type = Column(
+        String(50), nullable=False
+    )  # e.g. TOKEN_OK, TOKEN_EXPIRED, API_KEY_INVALID
     status = Column(String(20), nullable=False)  # SUCCESS / FAILURE
     message = Column(String(255), nullable=False)
     user_id = Column(String(36), nullable=True, index=True)
@@ -53,4 +57,3 @@ class SecurityAuditLog(Base):
     user_agent = Column(Text, nullable=True)
     details = Column(Text, nullable=True)
     created_at = Column(DateTime, nullable=False, default=datetime.utcnow)
-

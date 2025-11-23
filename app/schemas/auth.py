@@ -19,4 +19,3 @@ class ApiResponse(BaseModel):
     mensaje: str
     data: Optional[TokensData] = None
     success: bool
-

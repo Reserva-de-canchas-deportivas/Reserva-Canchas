@@ -24,7 +24,7 @@ async def get_billing_wsdl(api_key=Depends(require_api_key)):
         </port>
     </service>
 </definitions>"""
-    
+
     return Response(content=wsdl, media_type="application/xml")
 
 
@@ -39,5 +39,5 @@ async def handle_billing_soap(request: Request, api_key=Depends(require_api_key)
         </Response>
     </soap:Body>
 </soap:Envelope>"""
-    
+
     return Response(content=response_xml, media_type="text/xml")
