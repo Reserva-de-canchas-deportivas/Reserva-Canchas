@@ -6,7 +6,13 @@ from typing import Optional
 from sqlalchemy.orm import Session
 
 from app.domain.security_models import ApiKey
-from app.services.api_key_service import ApiKeySeed, DEFAULT_API_KEY_SEEDS, get_last_four, get_prefix, hash_api_key
+from app.services.api_key_service import (
+    ApiKeySeed,
+    DEFAULT_API_KEY_SEEDS,
+    get_last_four,
+    get_prefix,
+    hash_api_key,
+)
 
 
 def get_by_prefix(db: Session, prefix: str) -> Optional[ApiKey]:
@@ -24,7 +30,9 @@ def increment_usage(db: Session, api_key: ApiKey) -> None:
     db.commit()
 
 
-def seed_api_keys(db: Session, seeds: tuple[ApiKeySeed, ...] = DEFAULT_API_KEY_SEEDS) -> None:
+def seed_api_keys(
+    db: Session, seeds: tuple[ApiKeySeed, ...] = DEFAULT_API_KEY_SEEDS
+) -> None:
     """Crea API Keys por defecto si la tabla está vacía."""
     if db.query(ApiKey).count() > 0:
         return

@@ -2,12 +2,12 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker, Session
 from sqlalchemy.pool import StaticPool
 
-from app.domain.user_model import Base  
-from app.models.sede import Sede  
-from app.models.cancha import Cancha
-from app.models.tarifario import Tarifario 
-from app.models.reserva import Reserva
-from app.domain.security_models import ApiKey, SecurityAuditLog
+from app.domain.user_model import Base  # noqa: F401
+from app.models.sede import Sede  # noqa: F401
+from app.models.cancha import Cancha  # noqa: F401
+from app.models.tarifario import Tarifario  # noqa: F401
+from app.models.reserva import Reserva  # noqa: F401
+from app.domain.security_models import ApiKey, SecurityAuditLog  # noqa: F401
 
 # In-memory SQLite shared across threads for temporary data
 DATABASE_URL = "sqlite://"

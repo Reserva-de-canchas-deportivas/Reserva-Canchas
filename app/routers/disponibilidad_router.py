@@ -3,20 +3,19 @@ Router de Disponibilidad - Endpoint API
 Consulta de disponibilidad de canchas
 """
 
-from fastapi import APIRouter, Depends, Query, status
+from fastapi import APIRouter, Depends, Query
 from sqlalchemy.orm import Session
 import logging
 import sys
 import os
 
 # Ajustar path para imports
-sys.path.insert(0, os.path.abspath('.'))
+sys.path.insert(0, os.path.abspath("."))
 from app.database import get_db
 
 from app.services.disponibilidad_service import DisponibilidadService
 from app.schemas.disponibilidad import (
     DisponibilidadQuery,
-    DisponibilidadResponse,
     ApiResponse,
     ErrorResponse,
 )
@@ -30,8 +29,8 @@ router = APIRouter(
     responses={
         404: {"model": ErrorResponse, "description": "Sede o Cancha no encontrada"},
         400: {"model": ErrorResponse, "description": "Parámetros inválidos"},
-        500: {"model": ErrorResponse, "description": "Error interno del servidor"}
-    }
+        500: {"model": ErrorResponse, "description": "Error interno del servidor"},
+    },
 )
 
 ALL_ROLES = ("admin", "personal", "cliente")
@@ -47,53 +46,43 @@ def get_disponibilidad_service(db: Session = Depends(get_db)) -> DisponibilidadS
     "",
     response_model=ApiResponse,
     summary="Consultar disponibilidad de cancha",
-    description="Calcula disponibilidad considerando zona horaria, horarios de apertura y buffer"
+    description="Calcula disponibilidad considerando zona horaria, horarios de apertura y buffer",
 )
 def consultar_disponibilidad(
     fecha: str = Query(
-        ...,
-        description="Fecha a consultar (YYYY-MM-DD)",
-        example="2025-07-31"
+        ..., description="Fecha a consultar (YYYY-MM-DD)", example="2025-07-31"
     ),
-    sede_id: str = Query(
-        ...,
-        description="ID de la sede",
-        example="abc123-..."
-    ),
-    cancha_id: str = Query(
-        ...,
-        description="ID de la cancha",
-        example="xyz789-..."
-    ),
+    sede_id: str = Query(..., description="ID de la sede", example="abc123-..."),
+    cancha_id: str = Query(..., description="ID de la cancha", example="xyz789-..."),
     duracion_slot: int = Query(
         default=60,
         ge=15,
         le=240,
-        description="Duración de cada slot en minutos (15-240)"
+        description="Duración de cada slot en minutos (15-240)",
     ),
     service: DisponibilidadService = Depends(get_disponibilidad_service),
     _: object = Depends(ANY_ROLE_DEP),
 ):
     """
     Consultar disponibilidad de una cancha en una fecha específica.
-    
+
     El cálculo considera:
     - **Zona horaria** de la sede para conversión correcta de fechas
     - **Horario de apertura** configurado para el día de la semana
     - **Minutos de buffer** entre reservas
     - **Reservas existentes** en estados: hold, pending, confirmed
-    
+
     Parámetros:
     - **fecha**: Fecha a consultar (YYYY-MM-DD). No puede ser pasada ni más de 90 días en el futuro
     - **sede_id**: UUID de la sede
     - **cancha_id**: UUID de la cancha (debe pertenecer a la sede)
     - **duracion_slot**: Duración de cada slot en minutos (default: 60, rango: 15-240)
-    
+
     Retorna:
     - Lista de slots con horarios y disponibilidad
     - Información de la sede y cancha
     - Estadísticas de ocupación
-    
+
     Casos especiales:
     - Si la sede está cerrada ese día: retorna slots vacíos con dia_cerrado=true
     - Si no hay reservas: todos los slots del horario de apertura están disponibles
@@ -102,18 +91,15 @@ def consultar_disponibilidad(
         f"GET /disponibilidad - Consulta: fecha={fecha}, "
         f"sede={sede_id}, cancha={cancha_id}, slot={duracion_slot}min"
     )
-    
+
     # Validar parámetros con Pydantic
     query_params = DisponibilidadQuery(
-        fecha=fecha,
-        sede_id=sede_id,
-        cancha_id=cancha_id,
-        duracion_slot=duracion_slot
+        fecha=fecha, sede_id=sede_id, cancha_id=cancha_id, duracion_slot=duracion_slot
     )
-    
+
     # Calcular disponibilidad
     disponibilidad = service.calcular_disponibilidad(query_params)
-    
+
     # Determinar mensaje apropiado
     if disponibilidad.dia_cerrado:
         mensaje = f"La sede está cerrada el día {fecha}"
@@ -126,9 +112,5 @@ def consultar_disponibilidad(
             f"Disponibilidad calculada: {disponibilidad.slots_disponibles} "
             f"de {disponibilidad.total_slots} slots disponibles"
         )
-    
-    return ApiResponse(
-        mensaje=mensaje,
-        data=disponibilidad,
-        success=True
-    )
+
+    return ApiResponse(mensaje=mensaje, data=disponibilidad, success=True)

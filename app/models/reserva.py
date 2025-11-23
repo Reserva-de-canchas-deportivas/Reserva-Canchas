@@ -4,7 +4,6 @@ Modelo básico para soportar consulta de disponibilidad
 """
 
 from sqlalchemy import Column, String, Integer, ForeignKey, Index, Numeric, Boolean
-from sqlalchemy.orm import relationship
 from datetime import datetime
 import uuid
 
@@ -16,117 +15,129 @@ class Reserva(Base):
     """
     Reserva de cancha (modelo básico para disponibilidad)
     """
+
     __tablename__ = "reservas"
-    
+
     # Campos principales
     id = Column(
         String(36),
         primary_key=True,
         default=lambda: str(uuid.uuid4()),
         unique=True,
-        nullable=False
+        nullable=False,
     )
-    
+
     sede_id = Column(
         String(36),
-        ForeignKey('sedes.id', ondelete='RESTRICT'),
+        ForeignKey("sedes.id", ondelete="RESTRICT"),
         nullable=False,
         index=True,
-        comment="ID de la sede"
+        comment="ID de la sede",
     )
-    
+
     cancha_id = Column(
         String(36),
-        ForeignKey('canchas.id', ondelete='RESTRICT'),
+        ForeignKey("canchas.id", ondelete="RESTRICT"),
         nullable=False,
         index=True,
-        comment="ID de la cancha reservada"
+        comment="ID de la cancha reservada",
     )
-    
+
     fecha = Column(
-        String(10),
-        nullable=False,
-        comment="Fecha de la reserva (YYYY-MM-DD)"
+        String(10), nullable=False, comment="Fecha de la reserva (YYYY-MM-DD)"
     )
-    
-    hora_inicio = Column(
-        String(5),
-        nullable=False,
-        comment="Hora de inicio (HH:MM)"
-    )
-    
-    hora_fin = Column(
-        String(5),
-        nullable=False,
-        comment="Hora de fin (HH:MM)"
-    )
-    
+
+    hora_inicio = Column(String(5), nullable=False, comment="Hora de inicio (HH:MM)")
+
+    hora_fin = Column(String(5), nullable=False, comment="Hora de fin (HH:MM)")
+
     estado = Column(
         String(20),
         nullable=False,
         default="pending",
-        comment="Estado: hold, pending, confirmed, cancelled, completed"
+        comment="Estado: hold, pending, confirmed, cancelled, completed",
     )
 
-    usuario_id = Column(String(36), nullable=True, comment="Usuario que creó la reserva/HOLD")
-    vence_hold = Column(String(50), nullable=True, comment="Fecha/hora en que expira el HOLD")
-    clave_idempotencia = Column(String(120), unique=True, nullable=True, comment="Clave idempotente para evitar duplicados")
-    confirm_idempotencia = Column(String(120), nullable=True, comment="Clave idempotente para confirmar")
-    cancel_idempotencia = Column(String(120), nullable=True, comment="Clave idempotente para cancelar")
-    total = Column(Numeric(12, 2), nullable=True, comment="Total calculado para el HOLD")
+    usuario_id = Column(
+        String(36), nullable=True, comment="Usuario que creó la reserva/HOLD"
+    )
+    vence_hold = Column(
+        String(50), nullable=True, comment="Fecha/hora en que expira el HOLD"
+    )
+    clave_idempotencia = Column(
+        String(120),
+        unique=True,
+        nullable=True,
+        comment="Clave idempotente para evitar duplicados",
+    )
+    confirm_idempotencia = Column(
+        String(120), nullable=True, comment="Clave idempotente para confirmar"
+    )
+    cancel_idempotencia = Column(
+        String(120), nullable=True, comment="Clave idempotente para cancelar"
+    )
+    total = Column(
+        Numeric(12, 2), nullable=True, comment="Total calculado para el HOLD"
+    )
     moneda = Column(String(3), nullable=True, default="COP", comment="Moneda del cobro")
-    pago_capturado = Column(Boolean, nullable=False, default=False, comment="Indica si el pago fue capturado")
-    reprogramada_desde = Column(String(36), nullable=True, comment="ID de reserva origen si fue reprogramada")
-    reprogramada_a = Column(String(36), nullable=True, comment="ID de reserva destino si fue reprogramada")
-    
+    pago_capturado = Column(
+        Boolean,
+        nullable=False,
+        default=False,
+        comment="Indica si el pago fue capturado",
+    )
+    reprogramada_desde = Column(
+        String(36), nullable=True, comment="ID de reserva origen si fue reprogramada"
+    )
+    reprogramada_a = Column(
+        String(36), nullable=True, comment="ID de reserva destino si fue reprogramada"
+    )
+
     # Información adicional (básica)
     cliente_nombre = Column(
-        String(200),
-        nullable=True,
-        comment="Nombre del cliente (opcional por ahora)"
+        String(200), nullable=True, comment="Nombre del cliente (opcional por ahora)"
     )
-    
+
     cliente_email = Column(
-        String(200),
-        nullable=True,
-        comment="Email del cliente (opcional por ahora)"
+        String(200), nullable=True, comment="Email del cliente (opcional por ahora)"
     )
-    
+
     # Auditoría
     created_at = Column(
-        String(50),
-        nullable=False,
-        default=lambda: datetime.utcnow().isoformat()
+        String(50), nullable=False, default=lambda: datetime.utcnow().isoformat()
     )
-    
+
     updated_at = Column(
         String(50),
         nullable=False,
         default=lambda: datetime.utcnow().isoformat(),
-        onupdate=lambda: datetime.utcnow().isoformat()
+        onupdate=lambda: datetime.utcnow().isoformat(),
     )
-    
+
     activo = Column(
-        Integer,
-        nullable=False,
-        default=1,
-        comment="1=activo, 0=cancelado/eliminado"
+        Integer, nullable=False, default=1, comment="1=activo, 0=cancelado/eliminado"
     )
-    
+
     # Relaciones
     # cancha = relationship("Cancha", back_populates="reservas")
-    
+
     # Índices para optimizar consultas de disponibilidad
     __table_args__ = (
-        Index('idx_reserva_cancha_fecha', 'cancha_id', 'fecha'),
-        Index('idx_reserva_fecha_estado', 'fecha', 'estado'),
-        Index('idx_reserva_cancha_fecha_hora', 'cancha_id', 'fecha', 'hora_inicio', 'hora_fin'),
-        Index('idx_reserva_clave_idemp', 'clave_idempotencia', unique=True),
+        Index("idx_reserva_cancha_fecha", "cancha_id", "fecha"),
+        Index("idx_reserva_fecha_estado", "fecha", "estado"),
+        Index(
+            "idx_reserva_cancha_fecha_hora",
+            "cancha_id",
+            "fecha",
+            "hora_inicio",
+            "hora_fin",
+        ),
+        Index("idx_reserva_clave_idemp", "clave_idempotencia", unique=True),
     )
-    
+
     def __repr__(self):
         return f"<Reserva(cancha={self.cancha_id}, fecha={self.fecha}, {self.hora_inicio}-{self.hora_fin})>"
-    
+
     def to_dict(self):
         """Convertir a diccionario"""
         return {
@@ -149,9 +160,9 @@ class Reserva(Base):
             "cliente_email": self.cliente_email,
             "created_at": self.created_at,
             "updated_at": self.updated_at,
-            "activo": bool(self.activo)
+            "activo": bool(self.activo),
         }
-    
+
     def esta_activa(self) -> bool:
         """Verifica si la reserva está en un estado activo"""
-        return self.estado in ['hold', 'pending', 'confirmed'] and self.activo == 1
+        return self.estado in ["hold", "pending", "confirmed"] and self.activo == 1

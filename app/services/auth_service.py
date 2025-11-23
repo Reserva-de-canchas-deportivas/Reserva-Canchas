@@ -1,4 +1,3 @@
-from datetime import datetime, timezone
 from typing import Optional, Tuple
 
 from fastapi import Depends, HTTPException, Request
@@ -18,7 +17,9 @@ from app.services.security_responses import forbidden_error, unauthorized_error
 http_bearer = HTTPBearer(auto_error=False)
 
 
-def authenticate_user(db: Session, correo: Optional[str], telefono: Optional[str], contrasena: str):
+def authenticate_user(
+    db: Session, correo: Optional[str], telefono: Optional[str], contrasena: str
+):
     user = None
     if correo:
         user = user_repository.get_by_correo(db, correo)
@@ -33,8 +34,12 @@ def authenticate_user(db: Session, correo: Optional[str], telefono: Optional[str
 
 def issue_tokens_for_user(user) -> Tuple[str, str, int]:
     extra = {"role": user.rol}
-    access_token, exp_s = create_token(subject=user.usuario_id, token_type="access", extra_claims=extra)
-    refresh_token, _ = create_token(subject=user.usuario_id, token_type="refresh", extra_claims=extra)
+    access_token, exp_s = create_token(
+        subject=user.usuario_id, token_type="access", extra_claims=extra
+    )
+    refresh_token, _ = create_token(
+        subject=user.usuario_id, token_type="refresh", extra_claims=extra
+    )
     return access_token, refresh_token, exp_s
 
 
@@ -90,7 +95,11 @@ async def get_current_user(
             db,
             event_type=code or "TOKEN_INVALID",
             status="FAILURE",
-            message=detail.get("error", {}).get("message") if isinstance(detail, dict) else "Token inválido",
+            message=(
+                detail.get("error", {}).get("message")
+                if isinstance(detail, dict)
+                else "Token inválido"
+            ),
             request=request,
         )
         raise
@@ -139,4 +148,3 @@ async def get_current_user(
         request=request,
     )
     return user
-

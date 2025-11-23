@@ -23,7 +23,6 @@ from app.schemas.reserva import (
     ReservaCancelRequest,
     ReservaCancelData,
     ReservaReprogramarRequest,
-    ReservaReprogramarResponse,
     ReservaReprogramarData,
     DiferenciaPrecio,
 )
@@ -37,7 +36,9 @@ class ReservaService:
         self.db = db
         self.tarifario_service = TarifarioService(db)
 
-    def crear_hold(self, payload: ReservaHoldRequest, usuario: Usuario) -> Tuple[ReservaHoldData, bool]:
+    def crear_hold(
+        self, payload: ReservaHoldRequest, usuario: Usuario
+    ) -> Tuple[ReservaHoldData, bool]:
         existente = self._buscar_por_clave(payload.clave_idempotencia)
         if existente:
             return self._respuesta(existente), False
@@ -49,15 +50,24 @@ class ReservaService:
         self._validar_cancha_reservable(cancha)
 
         tz = self._obtener_timezone(sede)
-        inicio_dt = self._parse_fecha_hora(payload.fecha.isoformat(), payload.hora_inicio, tz)
+        inicio_dt = self._parse_fecha_hora(
+            payload.fecha.isoformat(), payload.hora_inicio, tz
+        )
         fin_dt = self._parse_fecha_hora(payload.fecha.isoformat(), payload.hora_fin, tz)
         if fin_dt <= inicio_dt:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
-                detail={"error": {"code": "HORARIO_INVALIDO", "message": "hora_fin debe ser mayor a hora_inicio"}},
+                detail={
+                    "error": {
+                        "code": "HORARIO_INVALIDO",
+                        "message": "hora_fin debe ser mayor a hora_inicio",
+                    }
+                },
             )
 
-        self._validar_en_horario(sede, payload.hora_inicio, payload.hora_fin, inicio_dt.weekday())
+        self._validar_en_horario(
+            sede, payload.hora_inicio, payload.hora_fin, inicio_dt.weekday()
+        )
         self._validar_solape(
             cancha.id,
             payload.fecha.isoformat(),
@@ -118,13 +128,27 @@ class ReservaService:
         if reserva.estado not in {"hold", "pending"}:
             raise HTTPException(
                 status_code=status.HTTP_409_CONFLICT,
-                detail={"error": {"code": "RESERVA_INVALIDA", "message": "La reserva no se puede confirmar"}},
+                detail={
+                    "error": {
+                        "code": "RESERVA_INVALIDA",
+                        "message": "La reserva no se puede confirmar",
+                    }
+                },
             )
 
-        if reserva.usuario_id and usuario.rol == "cliente" and reserva.usuario_id != usuario.usuario_id:
+        if (
+            reserva.usuario_id
+            and usuario.rol == "cliente"
+            and reserva.usuario_id != usuario.usuario_id
+        ):
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
-                detail={"error": {"code": "FORBIDDEN", "message": "No puedes confirmar esta reserva"}},
+                detail={
+                    "error": {
+                        "code": "FORBIDDEN",
+                        "message": "No puedes confirmar esta reserva",
+                    }
+                },
             )
 
         sede = self._obtener_sede(reserva.sede_id)
@@ -134,13 +158,23 @@ class ReservaService:
             if vence < datetime.now(tz):
                 raise HTTPException(
                     status_code=status.HTTP_410_GONE,
-                    detail={"error": {"code": "HOLD_EXPIRADO", "message": "La pre-reserva ha expirado"}},
+                    detail={
+                        "error": {
+                            "code": "HOLD_EXPIRADO",
+                            "message": "La pre-reserva ha expirado",
+                        }
+                    },
                 )
 
         if settings.require_payment_capture and not reserva.pago_capturado:
             raise HTTPException(
                 status_code=status.HTTP_402_PAYMENT_REQUIRED,
-                detail={"error": {"code": "PAGO_REQUERIDO", "message": "Se requiere pago capturado"}},
+                detail={
+                    "error": {
+                        "code": "PAGO_REQUERIDO",
+                        "message": "Se requiere pago capturado",
+                    }
+                },
             )
 
         self._validar_solape(
@@ -173,16 +207,28 @@ class ReservaService:
         if reserva.estado not in {"confirmed", "hold", "pending"}:
             raise HTTPException(
                 status_code=status.HTTP_409_CONFLICT,
-                detail={"error": {"code": "NO_CANCELABLE", "message": "La reserva no puede cancelarse"}},
+                detail={
+                    "error": {
+                        "code": "NO_CANCELABLE",
+                        "message": "La reserva no puede cancelarse",
+                    }
+                },
             )
 
         sede = self._obtener_sede(reserva.sede_id)
         tz = self._obtener_timezone(sede)
-        inicio_dt = datetime.strptime(f"{reserva.fecha} {reserva.hora_inicio}", "%Y-%m-%d %H:%M").replace(tzinfo=tz)
+        inicio_dt = datetime.strptime(
+            f"{reserva.fecha} {reserva.hora_inicio}", "%Y-%m-%d %H:%M"
+        ).replace(tzinfo=tz)
         if inicio_dt <= datetime.now(tz):
             raise HTTPException(
                 status_code=status.HTTP_409_CONFLICT,
-                detail={"error": {"code": "NO_CANCELABLE", "message": "La reserva ya inició o finalizó"}},
+                detail={
+                    "error": {
+                        "code": "NO_CANCELABLE",
+                        "message": "La reserva ya inició o finalizó",
+                    }
+                },
             )
 
         horas_restantes = (inicio_dt - datetime.now(tz)).total_seconds() / 3600
@@ -213,21 +259,42 @@ class ReservaService:
         if original.estado != "confirmed":
             raise HTTPException(
                 status_code=status.HTTP_409_CONFLICT,
-                detail={"error": {"code": "RESERVA_INVALIDA", "message": "Solo puedes reprogramar reservas confirmadas"}},
+                detail={
+                    "error": {
+                        "code": "RESERVA_INVALIDA",
+                        "message": "Solo puedes reprogramar reservas confirmadas",
+                    }
+                },
             )
-        if original.usuario_id and usuario.rol == "cliente" and original.usuario_id != usuario.usuario_id:
+        if (
+            original.usuario_id
+            and usuario.rol == "cliente"
+            and original.usuario_id != usuario.usuario_id
+        ):
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
-                detail={"error": {"code": "FORBIDDEN", "message": "No puedes reprogramar esta reserva"}},
+                detail={
+                    "error": {
+                        "code": "FORBIDDEN",
+                        "message": "No puedes reprogramar esta reserva",
+                    }
+                },
             )
 
         sede = self._obtener_sede(original.sede_id)
         tz = self._obtener_timezone(sede)
-        inicio_original = datetime.strptime(f"{original.fecha} {original.hora_inicio}", "%Y-%m-%d %H:%M").replace(tzinfo=tz)
+        inicio_original = datetime.strptime(
+            f"{original.fecha} {original.hora_inicio}", "%Y-%m-%d %H:%M"
+        ).replace(tzinfo=tz)
         if inicio_original <= datetime.now(tz):
             raise HTTPException(
                 status_code=status.HTTP_409_CONFLICT,
-                detail={"error": {"code": "NO_REPROGRAMABLE", "message": "La reserva ya inici�� o finaliz��"}},
+                detail={
+                    "error": {
+                        "code": "NO_REPROGRAMABLE",
+                        "message": "La reserva ya inici�� o finaliz��",
+                    }
+                },
             )
 
         nueva_cancha_id = payload.cancha_id or original.cancha_id
@@ -236,7 +303,9 @@ class ReservaService:
         self._validar_cancha_reservable(cancha)
 
         nueva_fecha = payload.fecha.isoformat()
-        self._validar_en_horario(sede, payload.hora_inicio, payload.hora_fin, payload.fecha.weekday())
+        self._validar_en_horario(
+            sede, payload.hora_inicio, payload.hora_fin, payload.fecha.weekday()
+        )
         self._validar_solape(
             cancha_id=cancha.id,
             fecha=nueva_fecha,
@@ -297,7 +366,11 @@ class ReservaService:
         self.db.refresh(original)
         self.db.refresh(nueva_reserva)
 
-        diff_data = DiferenciaPrecio(monto=float(abs(diferencia)), moneda=tarifa_nueva.moneda or "COP", tipo=tipo_diferencia)
+        diff_data = DiferenciaPrecio(
+            monto=float(abs(diferencia)),
+            moneda=tarifa_nueva.moneda or "COP",
+            tipo=tipo_diferencia,
+        )
         return ReservaReprogramarData(
             reserva_original=original.id,
             reserva_nueva=nueva_reserva.id,
@@ -307,8 +380,12 @@ class ReservaService:
     def _respuesta(self, reserva: Reserva) -> ReservaHoldData:
         sede = self._obtener_sede(reserva.sede_id)
         tz = self._obtener_timezone(sede)
-        inicio = datetime.strptime(f"{reserva.fecha} {reserva.hora_inicio}", "%Y-%m-%d %H:%M").replace(tzinfo=tz)
-        fin = datetime.strptime(f"{reserva.fecha} {reserva.hora_fin}", "%Y-%m-%d %H:%M").replace(tzinfo=tz)
+        inicio = datetime.strptime(
+            f"{reserva.fecha} {reserva.hora_inicio}", "%Y-%m-%d %H:%M"
+        ).replace(tzinfo=tz)
+        fin = datetime.strptime(
+            f"{reserva.fecha} {reserva.hora_fin}", "%Y-%m-%d %H:%M"
+        ).replace(tzinfo=tz)
         return ReservaHoldData(
             reserva_id=reserva.id,
             estado=reserva.estado,
@@ -329,7 +406,9 @@ class ReservaService:
             moneda=reserva.moneda or "COP",
         )
 
-    def _respuesta_cancel(self, reserva: Reserva, monto: float, tipo: str) -> ReservaCancelData:
+    def _respuesta_cancel(
+        self, reserva: Reserva, monto: float, tipo: str
+    ) -> ReservaCancelData:
         return ReservaCancelData(
             reserva_id=reserva.id,
             estado=reserva.estado,
@@ -340,9 +419,7 @@ class ReservaService:
         if not clave:
             return None
         return (
-            self.db.query(Reserva)
-            .filter(Reserva.clave_idempotencia == clave)
-            .first()
+            self.db.query(Reserva).filter(Reserva.clave_idempotencia == clave).first()
         )
 
     def _obtener_reserva(self, reserva_id: str) -> Reserva:
@@ -350,7 +427,12 @@ class ReservaService:
         if not reserva:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
-                detail={"error": {"code": "RESERVA_NO_ENCONTRADA", "message": "Reserva no encontrada"}},
+                detail={
+                    "error": {
+                        "code": "RESERVA_NO_ENCONTRADA",
+                        "message": "Reserva no encontrada",
+                    }
+                },
             )
         return reserva
 
@@ -359,7 +441,12 @@ class ReservaService:
         if not sede:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
-                detail={"error": {"code": "SEDE_NO_ENCONTRADA", "message": "Sede no encontrada"}},
+                detail={
+                    "error": {
+                        "code": "SEDE_NO_ENCONTRADA",
+                        "message": "Sede no encontrada",
+                    }
+                },
             )
         return sede
 
@@ -368,7 +455,12 @@ class ReservaService:
         if not cancha:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
-                detail={"error": {"code": "CANCHA_NO_ENCONTRADA", "message": "Cancha no encontrada"}},
+                detail={
+                    "error": {
+                        "code": "CANCHA_NO_ENCONTRADA",
+                        "message": "Cancha no encontrada",
+                    }
+                },
             )
         return cancha
 
@@ -376,14 +468,24 @@ class ReservaService:
         if cancha.sede_id != sede.id:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
-                detail={"error": {"code": "CANCHA_SEDE_MISMATCH", "message": "La cancha no pertenece a la sede"}},
+                detail={
+                    "error": {
+                        "code": "CANCHA_SEDE_MISMATCH",
+                        "message": "La cancha no pertenece a la sede",
+                    }
+                },
             )
 
     def _validar_cancha_reservable(self, cancha: Cancha) -> None:
         if cancha.estado != "activo" or cancha.activo != 1:
             raise HTTPException(
                 status_code=status.HTTP_409_CONFLICT,
-                detail={"error": {"code": "CANCHA_NO_RESERVABLE", "message": "La cancha no se encuentra disponible"}},
+                detail={
+                    "error": {
+                        "code": "CANCHA_NO_RESERVABLE",
+                        "message": "La cancha no se encuentra disponible",
+                    }
+                },
             )
 
     def _obtener_timezone(self, sede: Sede) -> ZoneInfo:
@@ -392,7 +494,9 @@ class ReservaService:
         except ZoneInfoNotFoundError as exc:
             raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                detail={"error": {"code": "ZONA_HORARIA_INVALIDA", "message": str(exc)}},
+                detail={
+                    "error": {"code": "ZONA_HORARIA_INVALIDA", "message": str(exc)}
+                },
             )
 
     def _parse_fecha_hora(self, fecha: str, hora: str, tz: ZoneInfo) -> datetime:
@@ -404,13 +508,20 @@ class ReservaService:
         except ValueError:
             return datetime.strptime(value, "%Y-%m-%dT%H:%M:%S")
 
-    def _validar_en_horario(self, sede: Sede, hora_inicio: str, hora_fin: str, dia_semana: int) -> None:
+    def _validar_en_horario(
+        self, sede: Sede, hora_inicio: str, hora_fin: str, dia_semana: int
+    ) -> None:
         try:
             horarios = json.loads(sede.horario_apertura_json)
         except json.JSONDecodeError:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
-                detail={"error": {"code": "HORARIO_INVALIDO", "message": "Horarios de sede inválidos"}},
+                detail={
+                    "error": {
+                        "code": "HORARIO_INVALIDO",
+                        "message": "Horarios de sede inválidos",
+                    }
+                },
             )
 
         mapa = {
@@ -426,19 +537,31 @@ class ReservaService:
         if not franjas:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
-                detail={"error": {"code": "FUERA_DE_APERTURA", "message": "La sede está cerrada en esa fecha"}},
+                detail={
+                    "error": {
+                        "code": "FUERA_DE_APERTURA",
+                        "message": "La sede está cerrada en esa fecha",
+                    }
+                },
             )
 
         inicio_min = self._hora_a_minutos(hora_inicio)
         fin_min = self._hora_a_minutos(hora_fin)
         for franja in franjas:
             rango_inicio, rango_fin = franja.split("-")
-            if inicio_min >= self._hora_a_minutos(rango_inicio) and fin_min <= self._hora_a_minutos(rango_fin):
+            if inicio_min >= self._hora_a_minutos(
+                rango_inicio
+            ) and fin_min <= self._hora_a_minutos(rango_fin):
                 return
 
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail={"error": {"code": "FUERA_DE_APERTURA", "message": "Horario fuera de apertura"}},
+            detail={
+                "error": {
+                    "code": "FUERA_DE_APERTURA",
+                    "message": "Horario fuera de apertura",
+                }
+            },
         )
 
     def _validar_solape(

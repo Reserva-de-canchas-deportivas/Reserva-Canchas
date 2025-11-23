@@ -9,7 +9,9 @@ from app.services.security_responses import forbidden_error
 
 def _validate_role(user: Usuario, roles: tuple[str, ...]) -> Usuario:
     if roles and user.rol not in roles:
-        raise forbidden_error("No tienes permisos para esta operación", code="FORBIDDEN")
+        raise forbidden_error(
+            "No tienes permisos para esta operación", code="FORBIDDEN"
+        )
     return user
 
 

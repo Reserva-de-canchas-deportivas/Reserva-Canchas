@@ -52,7 +52,9 @@ async def confirmar_reserva(
     current_user: Usuario = Depends(CLIENT_DEP),
 ):
     service = ReservaService(db)
-    data = service.confirmar_reserva(reserva_id=reserva_id, payload=payload, usuario=current_user)
+    data = service.confirmar_reserva(
+        reserva_id=reserva_id, payload=payload, usuario=current_user
+    )
     return ReservaConfirmResponse(mensaje="Reserva confirmada", data=data, success=True)
 
 
@@ -84,7 +86,9 @@ async def cancelar_reserva(
         payload = ReservaCancelRequest(motivo=motivo, clave_idempotencia=clave)
 
     service = ReservaService(db)
-    data = service.cancelar_reserva(reserva_id=reserva_id, payload=payload, usuario=current_user)
+    data = service.cancelar_reserva(
+        reserva_id=reserva_id, payload=payload, usuario=current_user
+    )
     return ReservaCancelResponse(mensaje="Reserva cancelada", data=data, success=True)
 
 
@@ -101,5 +105,9 @@ async def reprogramar_reserva(
     current_user: Usuario = Depends(CLIENT_DEP),
 ):
     service = ReservaService(db)
-    data = service.reprogramar_reserva(reserva_id=reserva_id, payload=payload, usuario=current_user)
-    return ReservaReprogramarResponse(mensaje="Reserva reprogramada", data=data, success=True)
+    data = service.reprogramar_reserva(
+        reserva_id=reserva_id, payload=payload, usuario=current_user
+    )
+    return ReservaReprogramarResponse(
+        mensaje="Reserva reprogramada", data=data, success=True
+    )

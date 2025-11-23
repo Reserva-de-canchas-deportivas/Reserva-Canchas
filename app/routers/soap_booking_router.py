@@ -2,9 +2,10 @@
 Router SOAP Manual para Reservas
 """
 
-from fastapi import APIRouter, Response, Request, Depends
 import logging
-import xml.etree.ElementTree as ET
+
+from fastapi import APIRouter, Depends, Request, Response
+
 from app.services.api_key_guard import require_api_key
 
 logger = logging.getLogger(__name__)
@@ -72,7 +73,7 @@ async def get_booking_wsdl(api_key=Depends(require_api_key)):
         </port>
     </service>
 </definitions>"""
-    
+
     return Response(content=wsdl, media_type="application/xml")
 
 
@@ -81,8 +82,8 @@ async def handle_booking_soap(request: Request, api_key=Depends(require_api_key)
     """Manejar requests SOAP de reservas"""
     try:
         body = await request.body()
-        logger.info("SOAP Booking request received")
-        
+        logger.info("SOAP Booking request received (bytes=%s)", len(body))
+
         response_xml = """<?xml version="1.0" encoding="UTF-8"?>
 <soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/"
                xmlns:tns="http://miempresa.com/soap/v1/booking">
@@ -92,9 +93,9 @@ async def handle_booking_soap(request: Request, api_key=Depends(require_api_key)
         </tns:ConsultarDisponibilidadResponse>
     </soap:Body>
 </soap:Envelope>"""
-        
+
         return Response(content=response_xml, media_type="text/xml")
-        
+
     except Exception as e:
         logger.error(f"Error: {e}")
         return Response(content="<error/>", media_type="text/xml", status_code=500)

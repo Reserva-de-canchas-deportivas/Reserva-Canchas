@@ -77,7 +77,9 @@ async def require_api_key(
             integration_name=api_key.integration_name,
             request=request,
         )
-        raise invalid_api_key_error("Límite de solicitudes consumido", code="API_KEY_QUOTA")
+        raise invalid_api_key_error(
+            "Límite de solicitudes consumido", code="API_KEY_QUOTA"
+        )
 
     api_key_repository.increment_usage(db, api_key)
     record_security_event(

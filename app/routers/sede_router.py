@@ -8,15 +8,14 @@ from sqlalchemy.orm import Session
 from typing import Optional
 import logging
 
-from app.database import get_db  
+from app.database import get_db
 from app.services.sede_service import SedeService
 from app.schemas.sede import (
     SedeCreate,
     SedeUpdate,
     SedeResponse,
-    SedeListResponse,
     ApiResponse,
-    ErrorResponse
+    ErrorResponse,
 )
 from app.services.rbac import require_role_dependency
 
@@ -28,8 +27,8 @@ router = APIRouter(
     responses={
         404: {"model": ErrorResponse, "description": "Sede no encontrada"},
         409: {"model": ErrorResponse, "description": "Conflicto de integridad"},
-        500: {"model": ErrorResponse, "description": "Error interno del servidor"}
-    }
+        500: {"model": ErrorResponse, "description": "Error interno del servidor"},
+    },
 )
 
 ALL_ROLES = ("admin", "personal", "cliente")
@@ -59,30 +58,28 @@ def get_sede_service(db: Session = Depends(get_db)) -> SedeService:
     dependencies=[Depends(ADMIN_PERSONAL_DEP)],
 )
 async def crear_sede(
-    sede: SedeCreate,
-    service: SedeService = Depends(get_sede_service)
+    sede: SedeCreate, service: SedeService = Depends(get_sede_service)
 ) -> ApiResponse:
     """Crear nueva sede."""
     logger.info("POST /sedes - Creando nueva sede")
-    
+
     try:
         nueva_sede = service.crear_sede(sede)
         return ApiResponse(
             mensaje="Sede creada exitosamente",
             data=SedeResponse.model_validate(nueva_sede),
-            success=True
+            success=True,
         )
     except ValueError as e:
         logger.error(f"Error de validación: {e}")
         raise HTTPException(
-            status_code=status.HTTP_409_CONFLICT,
-            detail={"error": str(e)}
+            status_code=status.HTTP_409_CONFLICT, detail={"error": str(e)}
         )
     except Exception as e:
         logger.error(f"Error interno: {e}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail={"error": f"Error al crear sede: {str(e)}"}
+            detail={"error": f"Error al crear sede: {str(e)}"},
         )
 
 
@@ -99,28 +96,24 @@ async def listar_sedes(
     activo: Optional[bool] = Query(None, description="Filtrar por estado activo"),
     page: int = Query(1, ge=1, description="Número de página"),
     page_size: int = Query(20, ge=1, le=100, description="Resultados por página"),
-    service: SedeService = Depends(get_sede_service)
+    service: SedeService = Depends(get_sede_service),
 ) -> ApiResponse:
     """Listar todas las sedes con paginación."""
     logger.info(f"GET /sedes - page={page}, page_size={page_size}, activo={activo}")
-    
+
     try:
-        resultado = service.listar_sedes(
-            activo=activo,
-            page=page,
-            page_size=page_size
-        )
-        
+        resultado = service.listar_sedes(activo=activo, page=page, page_size=page_size)
+
         return ApiResponse(
             mensaje=f"Se encontraron {resultado['total']} sede(s)",
             data=resultado,
-            success=True
+            success=True,
         )
     except Exception as e:
         logger.error(f"Error al listar sedes: {e}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail={"error": f"Error al listar sedes: {str(e)}"}
+            detail={"error": f"Error al listar sedes: {str(e)}"},
         )
 
 
@@ -132,28 +125,27 @@ async def listar_sedes(
 )
 async def obtener_sede(
     sede_id: str = Path(..., description="ID de la sede"),
-    service: SedeService = Depends(get_sede_service)
+    service: SedeService = Depends(get_sede_service),
 ) -> ApiResponse:
     """Obtener detalle completo de una sede específica"""
     logger.info(f"GET /sedes/{sede_id}")
-    
+
     try:
         sede = service.obtener_sede(sede_id)
         return ApiResponse(
             mensaje="Detalle de sede",
             data=SedeResponse.model_validate(sede),
-            success=True
+            success=True,
         )
     except ValueError as e:
         raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail={"error": str(e)}
+            status_code=status.HTTP_404_NOT_FOUND, detail={"error": str(e)}
         )
     except Exception as e:
         logger.error(f"Error al obtener sede: {e}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail={"error": f"Error al obtener sede: {str(e)}"}
+            detail={"error": f"Error al obtener sede: {str(e)}"},
         )
 
 
@@ -170,28 +162,27 @@ async def obtener_sede(
 async def actualizar_sede(
     sede_id: str = Path(..., description="ID de la sede"),
     sede_data: SedeUpdate = Body(...),
-    service: SedeService = Depends(get_sede_service)
+    service: SedeService = Depends(get_sede_service),
 ) -> ApiResponse:
     """Actualizar sede por ID."""
     logger.info(f"PATCH /sedes/{sede_id}")
-    
+
     try:
         sede_actualizada = service.actualizar_sede(sede_id, sede_data)
         return ApiResponse(
             mensaje="Sede actualizada exitosamente",
             data=SedeResponse.model_validate(sede_actualizada),
-            success=True
+            success=True,
         )
     except ValueError as e:
         raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail={"error": str(e)}
+            status_code=status.HTTP_404_NOT_FOUND, detail={"error": str(e)}
         )
     except Exception as e:
         logger.error(f"Error al actualizar sede: {e}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail={"error": f"Error al actualizar sede: {str(e)}"}
+            detail={"error": f"Error al actualizar sede: {str(e)}"},
         )
 
 
@@ -206,23 +197,21 @@ async def actualizar_sede(
 )
 async def eliminar_sede(
     sede_id: str = Path(..., description="ID de la sede"),
-    service: SedeService = Depends(get_sede_service)
+    service: SedeService = Depends(get_sede_service),
 ):
     """Eliminar sede"""
     logger.info(f"DELETE /sedes/{sede_id}")
-    
+
     try:
         service.eliminar_sede(sede_id)
         return None
     except ValueError as e:
         raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail={"error": str(e)}
+            status_code=status.HTTP_404_NOT_FOUND, detail={"error": str(e)}
         )
     except Exception as e:
         logger.error(f"Error al eliminar sede: {e}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail={"error": f"Error al eliminar sede: {str(e)}"}
+            detail={"error": f"Error al eliminar sede: {str(e)}"},
         )
-    

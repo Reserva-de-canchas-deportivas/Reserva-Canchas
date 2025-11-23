@@ -56,7 +56,9 @@ class KeyProvider:
 
         # 4) Generate ephemeral key pair (dev fallback)
         if rsa is None:
-            raise RuntimeError("RSA keypair unavailable; provide PRIVATE_KEY/PUBLIC_KEY or key files.")
+            raise RuntimeError(
+                "RSA keypair unavailable; provide PRIVATE_KEY/PUBLIC_KEY or key files."
+            )
 
         key = rsa.generate_private_key(public_exponent=65537, key_size=2048)
         private_pem = key.private_bytes(
@@ -64,10 +66,14 @@ class KeyProvider:
             format=serialization.PrivateFormat.PKCS8,
             encryption_algorithm=serialization.NoEncryption(),
         ).decode()
-        public_pem = key.public_key().public_bytes(
-            encoding=serialization.Encoding.PEM,
-            format=serialization.PublicFormat.SubjectPublicKeyInfo,
-        ).decode()
+        public_pem = (
+            key.public_key()
+            .public_bytes(
+                encoding=serialization.Encoding.PEM,
+                format=serialization.PublicFormat.SubjectPublicKeyInfo,
+            )
+            .decode()
+        )
         cls._private_pem, cls._public_pem = private_pem, public_pem
 
         # Persist generated keys for future reloads (development only)
@@ -86,10 +92,16 @@ def _now() -> datetime:
     return datetime.now(tz=timezone.utc)
 
 
-def create_token(subject: str, token_type: str, extra_claims: Dict[str, Any] | None = None) -> Tuple[str, int]:
+def create_token(
+    subject: str, token_type: str, extra_claims: Dict[str, Any] | None = None
+) -> Tuple[str, int]:
     assert token_type in {"access", "refresh"}
     private_key, _ = KeyProvider.load_keys()
-    exp_seconds = settings.access_token_expire_seconds if token_type == "access" else settings.refresh_token_expire_seconds
+    exp_seconds = (
+        settings.access_token_expire_seconds
+        if token_type == "access"
+        else settings.refresh_token_expire_seconds
+    )
     jti = str(uuid.uuid4())
     expire_at = _now() + timedelta(seconds=exp_seconds)
 
@@ -115,4 +127,3 @@ def decode_token(token: str) -> Dict[str, Any]:
         raise e
     except JWTError as e:  # includes invalid signature, malformed
         raise e
-
