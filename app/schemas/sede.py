@@ -4,6 +4,7 @@ Validación de datos de entrada/salida
 """
 
 from pydantic import BaseModel, Field, field_validator, ConfigDict
+import json
 from typing import Optional, Dict, List
 import re
 import pytz
@@ -150,7 +151,7 @@ class SedeUpdate(BaseModel):
 class SedeResponse(BaseModel):
     """Schema de respuesta de sede"""
 
-    sede_id: str
+    sede_id: str = Field(validation_alias="id", serialization_alias="sede_id")
     nombre: str
     direccion: str
     zona_horaria: str
@@ -160,7 +161,17 @@ class SedeResponse(BaseModel):
     updated_at: str
     activo: bool
 
-    model_config = ConfigDict(from_attributes=True)
+    @field_validator("horario_apertura_json", mode="before")
+    @classmethod
+    def parse_horario(cls, v):
+        if isinstance(v, str):
+            try:
+                return json.loads(v)
+            except json.JSONDecodeError:
+                return {}
+        return v
+
+    model_config = ConfigDict(from_attributes=True, populate_by_name=True)
 
 
 class SedeListResponse(BaseModel):
