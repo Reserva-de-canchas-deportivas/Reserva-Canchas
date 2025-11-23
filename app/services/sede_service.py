@@ -4,6 +4,7 @@ Adaptado para SQLite (UUID como string)
 """
 
 import logging
+import json
 from typing import Optional
 
 from fastapi import HTTPException, status
@@ -91,6 +92,36 @@ class SedeService:
 
         return sede
 
+    def actualizar_sede(self, sede_id: str, sede_data) -> Sede:
+        """Actualizar una sede existente."""
+        sede = self.repository.actualizar(sede_id, sede_data)
+        if not sede:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail={
+                    "error": {
+                        "code": "SEDE_NO_ENCONTRADA",
+                        "message": f"No se encontró la sede con ID {sede_id}",
+                        "details": {"sede_id": sede_id},
+                    }
+                },
+            )
+        return sede
+
+    def eliminar_sede(self, sede_id: str) -> None:
+        """Eliminar (soft delete) una sede."""
+        eliminado = self.repository.eliminar(sede_id)
+        if not eliminado:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail={
+                    "error": {
+                        "code": "SEDE_NO_ENCONTRADA",
+                        "message": f"No se encontró la sede con ID {sede_id}",
+                        "details": {"sede_id": sede_id},
+                    }
+                },
+            )
     # ... resto de métodos igual pero usando str en lugar de UUID
 
     def listar_sedes(
@@ -125,7 +156,11 @@ class SedeService:
                     "nombre": sede.nombre,
                     "direccion": sede.direccion,
                     "zona_horaria": sede.zona_horaria,
-                    "horario_apertura_json": {},
+                    "horario_apertura_json": json.loads(sede.horario_apertura_json)
+                    if isinstance(sede.horario_apertura_json, str)
+                    else sede.horario_apertura_json
+                    if sede.horario_apertura_json
+                    else {},
                     "minutos_buffer": sede.minutos_buffer,
                     "created_at": sede.created_at,
                     "updated_at": sede.updated_at,
