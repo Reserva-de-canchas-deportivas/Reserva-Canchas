@@ -25,6 +25,7 @@ from app.schemas.reserva import (
     ReservaReprogramarRequest,
     ReservaReprogramarData,
     DiferenciaPrecio,
+    ReservaCleanData,
 )
 from app.services.tarifario_service import TarifarioService
 
@@ -247,6 +248,33 @@ class ReservaService:
         self.db.commit()
         self.db.refresh(reserva)
         return self._respuesta_cancel(reserva, monto, tipo)
+
+    def expirar_holds_vencidos(self) -> ReservaCleanData:
+        """Marca como expirada cualquier reserva en HOLD cuyo vence_hold ya pasó."""
+        expiradas = 0
+        holds = (
+            self.db.query(Reserva)
+            .filter(Reserva.estado == "hold", Reserva.vence_hold.isnot(None), Reserva.activo == 1)
+            .all()
+        )
+        for hold in holds:
+            try:
+                vence = datetime.fromisoformat(hold.vence_hold)
+            except ValueError:
+                continue
+            ahora_ref = datetime.now(vence.tzinfo) if vence.tzinfo else datetime.utcnow()
+            if vence < ahora_ref:
+                hold.estado = "expired"
+                hold.activo = 0
+                expiradas += 1
+                self.db.add(hold)
+
+        if expiradas:
+            self.db.commit()
+        else:
+            self.db.rollback()
+
+        return ReservaCleanData(expiradas=expiradas, ejecutado_en=datetime.utcnow().isoformat())
 
     def reprogramar_reserva(
         self,
@@ -608,4 +636,5 @@ class ReservaService:
 
     def _calcular_vence_hold(self, tz: ZoneInfo) -> str:
         ahora = datetime.now(tz)
-        return (ahora + timedelta(minutes=settings.hold_ttl_minutes)).isoformat()
+        delta = timedelta(minutes=settings.hold_ttl_minutes)
+        return (ahora + delta).isoformat()
