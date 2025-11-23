@@ -4,7 +4,7 @@ Router SOAP Manual para Reservas
 
 import logging
 
-from fastapi import APIRouter, Depends, Request, Response
+from fastapi import APIRouter, Depends, Request, Response, status
 
 from app.services.api_key_guard import require_api_key
 
@@ -14,8 +14,8 @@ booking_soap_router = APIRouter(prefix="/soap/booking", tags=["SOAP - Booking"])
 
 
 @booking_soap_router.get("")
-async def get_booking_wsdl(api_key=Depends(require_api_key)):
-    """Retornar WSDL para BookingService"""
+async def get_booking_wsdl():
+    """Retornar WSDL para BookingService (publico para consulta de contrato)"""
     wsdl = """<?xml version="1.0" encoding="UTF-8"?>
 <definitions xmlns="http://schemas.xmlsoap.org/wsdl/"
              xmlns:soap="http://schemas.xmlsoap.org/wsdl/soap/"
@@ -97,5 +97,9 @@ async def handle_booking_soap(request: Request, api_key=Depends(require_api_key)
         return Response(content=response_xml, media_type="text/xml")
 
     except Exception as e:
-        logger.error(f"Error: {e}")
-        return Response(content="<error/>", media_type="text/xml", status_code=500)
+        logger.error("Error: %s", e)
+        return Response(
+            content="<error/>",
+            media_type="text/xml",
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+        )

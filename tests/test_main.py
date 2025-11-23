@@ -31,3 +31,22 @@ def test_soap_info():
     payload = response.json()
     assert "services" in payload
     assert payload["implementation"].startswith("Manual")
+
+
+def test_docs_info():
+    response = client.get("/docs/info")
+    assert response.status_code == 200
+    payload = response.json()
+    assert payload["mensaje"] == "Documentacion disponible"
+    assert payload["data"]["openapi"] == "/openapi.json"
+    assert "/soap/auth?wsdl" in payload["data"]["wsdl"]
+
+
+def test_wsdl_endpoints_public():
+    for path in ("/soap/auth?wsdl", "/soap/booking?wsdl", "/soap/billing?wsdl"):
+        resp = client.get(path)
+        assert resp.status_code == 200
+        assert resp.headers["content-type"].startswith(
+            "application/xml"
+        ) or resp.headers["content-type"].startswith("text/xml")
+        assert "<definitions" in resp.text or "<Envelope" in resp.text

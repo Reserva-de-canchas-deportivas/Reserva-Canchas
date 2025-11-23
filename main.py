@@ -1,10 +1,14 @@
+import argparse
+import json
 import logging
 import os
+import sys
 import time
 from contextvars import ContextVar
 from uuid import uuid4
 
 from fastapi import FastAPI
+from fastapi.openapi.utils import get_openapi
 from fastapi.responses import JSONResponse
 from sqlalchemy import text
 from sqlalchemy.exc import SQLAlchemyError
@@ -99,7 +103,40 @@ def configure_metrics(app: FastAPI) -> None:  # pragma: no cover
         )
 
 
-app = FastAPI(title="Reserva Canchas API", description="API REST", version="1.0.0")
+def create_app() -> FastAPI:
+    application = FastAPI(
+        title="Reserva Canchas API",
+        description="API REST para gestion de reservas con servicios SOAP complementarios.",
+        version="1.0.0",
+        docs_url="/docs",
+        redoc_url="/redoc",
+        openapi_url="/openapi.json",
+    )
+
+    def custom_openapi() -> dict:
+        if application.openapi_schema:
+            return application.openapi_schema
+        openapi_schema = get_openapi(
+            title=application.title,
+            version=application.version,
+            description=application.description,
+            routes=application.routes,
+            contact={
+                "name": "Equipo Reserva Canchas",
+                "url": "https://github.com/Reserva-de-canchas-deportivas",
+                "email": "devops@example.com",
+            },
+            license_info={"name": "MIT"},
+            servers=[{"url": "/", "description": "Default"}],
+        )
+        application.openapi_schema = openapi_schema
+        return application.openapi_schema
+
+    application.openapi = custom_openapi
+    return application
+
+
+app = create_app()
 
 # Inicializar DB en memoria al arranque (para health/readiness)
 init_db(create_all=True)
@@ -161,7 +198,49 @@ async def soap_info():
     return JSONResponse(content=get_soap_info())
 
 
-if __name__ == "__main__":
+@app.get("/docs/info")
+async def docs_info():
+    """Ubicaciones de la documentacion y contratos."""
+    return {
+        "mensaje": "Documentacion disponible",
+        "data": {
+            "openapi": app.openapi_url,
+            "swagger": app.docs_url,
+            "redoc": app.redoc_url,
+            "wsdl": [
+                "/soap/auth?wsdl",
+                "/soap/booking?wsdl",
+                "/soap/billing?wsdl",
+            ],
+        },
+        "success": True,
+    }
+
+
+def _export_openapi(path: str) -> None:  # pragma: no cover
+    schema = app.openapi()
+    with open(path, "w", encoding="utf-8") as fh:
+        json.dump(schema, fh, indent=2, ensure_ascii=False)
+    print(f"OpenAPI schema exported to {path}")
+
+
+def _cli(argv: list[str]) -> None:  # pragma: no cover
+    parser = argparse.ArgumentParser()
+    parser.add_argument(
+        "--export-openapi",
+        dest="export_openapi",
+        help="Ruta de salida para OpenAPI JSON",
+    )
+    args = parser.parse_args(argv)
+
+    if args.export_openapi:
+        _export_openapi(args.export_openapi)
+        return
+
     import uvicorn
 
     uvicorn.run("main:app", host="0.0.0.0", port=8000, reload=True)
+
+
+if __name__ == "__main__":
+    _cli(sys.argv[1:])  # pragma: no cover

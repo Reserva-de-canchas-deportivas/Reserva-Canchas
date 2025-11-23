@@ -1,0 +1,4231 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "Reserva Canchas API",
+    "description": "API REST para gestion de reservas con servicios SOAP complementarios.",
+    "contact": {
+      "name": "Equipo Reserva Canchas",
+      "url": "https://github.com/Reserva-de-canchas-deportivas",
+      "email": "devops@example.com"
+    },
+    "license": {
+      "name": "MIT"
+    },
+    "version": "1.0.0"
+  },
+  "servers": [
+    {
+      "url": "/",
+      "description": "Default"
+    }
+  ],
+  "paths": {
+    "/soap/auth": {
+      "get": {
+        "tags": [
+          "SOAP - Auth"
+        ],
+        "summary": "Get Auth Wsdl",
+        "description": "Retorna WSDL para AuthService (publico para consulta de contrato).",
+        "operationId": "get_auth_wsdl_soap_auth_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "SOAP - Auth"
+        ],
+        "summary": "Handle Auth Soap",
+        "description": "Procesa solicitudes SOAP de login.",
+        "operationId": "handle_auth_soap_soap_auth_post",
+        "parameters": [
+          {
+            "name": "X-Api-Key",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Api-Key"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/soap/booking": {
+      "get": {
+        "tags": [
+          "SOAP - Booking"
+        ],
+        "summary": "Get Booking Wsdl",
+        "description": "Retornar WSDL para BookingService (publico para consulta de contrato)",
+        "operationId": "get_booking_wsdl_soap_booking_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "SOAP - Booking"
+        ],
+        "summary": "Handle Booking Soap",
+        "description": "Manejar requests SOAP de reservas",
+        "operationId": "handle_booking_soap_soap_booking_post",
+        "parameters": [
+          {
+            "name": "X-Api-Key",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Api-Key"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/soap/billing": {
+      "get": {
+        "tags": [
+          "SOAP - Billing"
+        ],
+        "summary": "Get Billing Wsdl",
+        "description": "Retornar WSDL para BillingService (publico para consulta de contrato)",
+        "operationId": "get_billing_wsdl_soap_billing_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "SOAP - Billing"
+        ],
+        "summary": "Handle Billing Soap",
+        "description": "Manejar requests SOAP de facturacion",
+        "operationId": "handle_billing_soap_soap_billing_post",
+        "parameters": [
+          {
+            "name": "X-Api-Key",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Api-Key"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/auth/login": {
+      "post": {
+        "tags": [
+          "auth"
+        ],
+        "summary": "Login",
+        "operationId": "login_api_v1_auth_login_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LoginRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/app__schemas__auth__ApiResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/auth/refresh": {
+      "post": {
+        "tags": [
+          "auth"
+        ],
+        "summary": "Refresh",
+        "operationId": "refresh_api_v1_auth_refresh_post",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/app__schemas__auth__ApiResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/auth/logout": {
+      "post": {
+        "tags": [
+          "auth"
+        ],
+        "summary": "Logout",
+        "operationId": "logout_api_v1_auth_logout_post",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/app__schemas__auth__ApiResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/sedes/": {
+      "post": {
+        "tags": [
+          "Sedes"
+        ],
+        "summary": "Crear nueva sede",
+        "description": "Crea una nueva sede deportiva con validación de:\n    - Nombre único (3-200 caracteres)\n    - Dirección física (10-500 caracteres)\n    - Zona horaria IANA válida (ej: America/Bogota)\n    - Horarios por día en formato HH:MM-HH:MM\n    - Buffer entre reservas (0-60 minutos)",
+        "operationId": "crear_sede_api_v1_sedes__post",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SedeCreate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/app__schemas__sede__ApiResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Sede no encontrada",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/app__schemas__sede__ErrorResponse"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflicto de integridad",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/app__schemas__sede__ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Error interno del servidor",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/app__schemas__sede__ErrorResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "tags": [
+          "Sedes"
+        ],
+        "summary": "Listar sedes",
+        "description": "Obtiene lista de sedes con filtros opcionales y paginación.",
+        "operationId": "listar_sedes_api_v1_sedes__get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "activo",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "boolean"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Filtrar por estado activo",
+              "title": "Activo"
+            },
+            "description": "Filtrar por estado activo"
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "description": "Número de página",
+              "default": 1,
+              "title": "Page"
+            },
+            "description": "Número de página"
+          },
+          {
+            "name": "page_size",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 100,
+              "minimum": 1,
+              "description": "Resultados por página",
+              "default": 20,
+              "title": "Page Size"
+            },
+            "description": "Resultados por página"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/app__schemas__sede__ApiResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Sede no encontrada",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/app__schemas__sede__ErrorResponse"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflicto de integridad",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/app__schemas__sede__ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Error interno del servidor",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/app__schemas__sede__ErrorResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/sedes/{sede_id}": {
+      "get": {
+        "tags": [
+          "Sedes"
+        ],
+        "summary": "Obtener detalle de sede",
+        "description": "Obtener detalle completo de una sede específica",
+        "operationId": "obtener_sede_api_v1_sedes__sede_id__get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "sede_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "description": "ID de la sede",
+              "title": "Sede Id"
+            },
+            "description": "ID de la sede"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/app__schemas__sede__ApiResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Sede no encontrada",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/app__schemas__sede__ErrorResponse"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflicto de integridad",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/app__schemas__sede__ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Error interno del servidor",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/app__schemas__sede__ErrorResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "patch": {
+        "tags": [
+          "Sedes"
+        ],
+        "summary": "Actualizar sede",
+        "description": "Actualiza campos específicos de una sede existente.\n    Solo se actualizan los campos proporcionados.",
+        "operationId": "actualizar_sede_api_v1_sedes__sede_id__patch",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "sede_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "description": "ID de la sede",
+              "title": "Sede Id"
+            },
+            "description": "ID de la sede"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SedeUpdate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/app__schemas__sede__ApiResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Sede no encontrada",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/app__schemas__sede__ErrorResponse"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflicto de integridad",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/app__schemas__sede__ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Error interno del servidor",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/app__schemas__sede__ErrorResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Sedes"
+        ],
+        "summary": "Eliminar sede",
+        "description": "Elimina una sede si no tiene canchas o reservas asociadas.",
+        "operationId": "eliminar_sede_api_v1_sedes__sede_id__delete",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "sede_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "description": "ID de la sede",
+              "title": "Sede Id"
+            },
+            "description": "ID de la sede"
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "404": {
+            "description": "Sede no encontrada",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/app__schemas__sede__ErrorResponse"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflicto de integridad",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/app__schemas__sede__ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Error interno del servidor",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/app__schemas__sede__ErrorResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/sedes/{sede_id}/canchas/": {
+      "post": {
+        "tags": [
+          "Canchas"
+        ],
+        "summary": "Crear nueva cancha en una sede",
+        "description": "Crea una nueva cancha deportiva asociada a una sede específica",
+        "operationId": "crear_cancha_api_v1_sedes__sede_id__canchas__post",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "sede_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "description": "ID de la sede",
+              "title": "Sede Id"
+            },
+            "description": "ID de la sede"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CanchaCreate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/app__schemas__cancha__ApiResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Cancha o Sede no encontrada",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/app__schemas__cancha__ErrorResponse"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflicto de integridad",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/app__schemas__cancha__ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Error interno del servidor",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/app__schemas__cancha__ErrorResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "tags": [
+          "Canchas"
+        ],
+        "summary": "Listar canchas de una sede",
+        "description": "Obtiene la lista de canchas de una sede con filtros opcionales",
+        "operationId": "listar_canchas_por_sede_api_v1_sedes__sede_id__canchas__get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "sede_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "description": "ID de la sede",
+              "title": "Sede Id"
+            },
+            "description": "ID de la sede"
+          },
+          {
+            "name": "estado",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "$ref": "#/components/schemas/EstadoCancha"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Filtrar por estado",
+              "title": "Estado"
+            },
+            "description": "Filtrar por estado"
+          },
+          {
+            "name": "tipo_superficie",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "$ref": "#/components/schemas/TipoSuperficie"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Filtrar por tipo de superficie",
+              "title": "Tipo Superficie"
+            },
+            "description": "Filtrar por tipo de superficie"
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "description": "Número de página",
+              "default": 1,
+              "title": "Page"
+            },
+            "description": "Número de página"
+          },
+          {
+            "name": "page_size",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 100,
+              "minimum": 1,
+              "description": "Tamaño de página",
+              "default": 20,
+              "title": "Page Size"
+            },
+            "description": "Tamaño de página"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/app__schemas__cancha__ApiResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Cancha o Sede no encontrada",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/app__schemas__cancha__ErrorResponse"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflicto de integridad",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/app__schemas__cancha__ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Error interno del servidor",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/app__schemas__cancha__ErrorResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/canchas/{cancha_id}": {
+      "get": {
+        "tags": [
+          "Canchas"
+        ],
+        "summary": "Obtener detalle de cancha",
+        "description": "Obtiene la información completa de una cancha por su ID",
+        "operationId": "obtener_cancha_api_v1_canchas__cancha_id__get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "cancha_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "description": "ID de la cancha",
+              "title": "Cancha Id"
+            },
+            "description": "ID de la cancha"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/app__schemas__cancha__ApiResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Cancha o Sede no encontrada",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/app__schemas__cancha__ErrorResponse"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflicto de integridad",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/app__schemas__cancha__ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Error interno del servidor",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/app__schemas__cancha__ErrorResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "patch": {
+        "tags": [
+          "Canchas"
+        ],
+        "summary": "Actualizar cancha",
+        "description": "Actualiza campos específicos de una cancha existente",
+        "operationId": "actualizar_cancha_api_v1_canchas__cancha_id__patch",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "cancha_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "description": "ID de la cancha",
+              "title": "Cancha Id"
+            },
+            "description": "ID de la cancha"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CanchaUpdate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/app__schemas__cancha__ApiResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Cancha o Sede no encontrada",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/app__schemas__cancha__ErrorResponse"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflicto de integridad",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/app__schemas__cancha__ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Error interno del servidor",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/app__schemas__cancha__ErrorResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Canchas"
+        ],
+        "summary": "Eliminar cancha",
+        "description": "Elimina una cancha si no tiene reservas futuras asociadas",
+        "operationId": "eliminar_cancha_api_v1_canchas__cancha_id__delete",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "cancha_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "description": "ID de la cancha",
+              "title": "Cancha Id"
+            },
+            "description": "ID de la cancha"
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "404": {
+            "description": "Cancha o Sede no encontrada",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/app__schemas__cancha__ErrorResponse"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflicto de integridad",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/app__schemas__cancha__ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Error interno del servidor",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/app__schemas__cancha__ErrorResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/tarifario": {
+      "post": {
+        "tags": [
+          "Tarifario"
+        ],
+        "summary": "Crear nueva tarifa",
+        "description": "Crea una nueva tarifa con validación de solapamiento y prioridad",
+        "operationId": "crear_tarifa_api_v1_tarifario_post",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TarifarioCreate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/app__schemas__tarifario__ApiResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Tarifa, Sede o Cancha no encontrada",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/app__schemas__tarifario__ErrorResponse"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflicto de solapamiento",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/app__schemas__tarifario__ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Error interno del servidor",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/app__schemas__tarifario__ErrorResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "tags": [
+          "Tarifario"
+        ],
+        "summary": "Listar tarifas",
+        "description": "Obtiene lista de tarifas con filtros opcionales y paginación",
+        "operationId": "listar_tarifas_api_v1_tarifario_get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "sede_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Filtrar por sede",
+              "title": "Sede Id"
+            },
+            "description": "Filtrar por sede"
+          },
+          {
+            "name": "cancha_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Filtrar por cancha",
+              "title": "Cancha Id"
+            },
+            "description": "Filtrar por cancha"
+          },
+          {
+            "name": "dia_semana",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "integer",
+                  "maximum": 6,
+                  "minimum": 0
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Filtrar por día (0-6)",
+              "title": "Dia Semana"
+            },
+            "description": "Filtrar por día (0-6)"
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "description": "Número de página",
+              "default": 1,
+              "title": "Page"
+            },
+            "description": "Número de página"
+          },
+          {
+            "name": "page_size",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 100,
+              "minimum": 1,
+              "description": "Tamaño de página",
+              "default": 20,
+              "title": "Page Size"
+            },
+            "description": "Tamaño de página"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/app__schemas__tarifario__ApiResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Tarifa, Sede o Cancha no encontrada",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/app__schemas__tarifario__ErrorResponse"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflicto de solapamiento",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/app__schemas__tarifario__ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Error interno del servidor",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/app__schemas__tarifario__ErrorResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/tarifario/consultar/aplicable": {
+      "get": {
+        "tags": [
+          "Tarifario"
+        ],
+        "summary": "Consultar tarifa aplicable",
+        "description": "Obtiene la tarifa aplicable según prioridad cancha > sede",
+        "operationId": "consultar_tarifa_aplicable_api_v1_tarifario_consultar_aplicable_get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "sede_id",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "description": "ID de la sede",
+              "title": "Sede Id"
+            },
+            "description": "ID de la sede"
+          },
+          {
+            "name": "cancha_id",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "description": "ID de la cancha",
+              "title": "Cancha Id"
+            },
+            "description": "ID de la cancha"
+          },
+          {
+            "name": "dia_semana",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "maximum": 6,
+              "minimum": 0,
+              "description": "Día de la semana (0-6)",
+              "title": "Dia Semana"
+            },
+            "description": "Día de la semana (0-6)"
+          },
+          {
+            "name": "hora",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "description": "Hora en formato HH:MM",
+              "title": "Hora"
+            },
+            "description": "Hora en formato HH:MM"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/app__schemas__tarifario__ApiResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Tarifa, Sede o Cancha no encontrada",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/app__schemas__tarifario__ErrorResponse"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflicto de solapamiento",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/app__schemas__tarifario__ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Error interno del servidor",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/app__schemas__tarifario__ErrorResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/tarifario/resolver": {
+      "get": {
+        "tags": [
+          "Tarifario"
+        ],
+        "summary": "Resolver precio prioritario",
+        "description": "Resuelve la tarifa aplicable priorizando cancha sobre sede y respeta la zona horaria de la sede.",
+        "operationId": "resolver_tarifa_api_v1_tarifario_resolver_get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "fecha",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "description": "Fecha YYYY-MM-DD",
+              "title": "Fecha"
+            },
+            "description": "Fecha YYYY-MM-DD"
+          },
+          {
+            "name": "hora_inicio",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "description": "Hora inicio HH:MM",
+              "title": "Hora Inicio"
+            },
+            "description": "Hora inicio HH:MM"
+          },
+          {
+            "name": "hora_fin",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "description": "Hora fin HH:MM",
+              "title": "Hora Fin"
+            },
+            "description": "Hora fin HH:MM"
+          },
+          {
+            "name": "sede_id",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "description": "ID de la sede",
+              "title": "Sede Id"
+            },
+            "description": "ID de la sede"
+          },
+          {
+            "name": "cancha_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "ID de la cancha (opcional)",
+              "title": "Cancha Id"
+            },
+            "description": "ID de la cancha (opcional)"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TarifaResolverResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Tarifa, Sede o Cancha no encontrada",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/app__schemas__tarifario__ErrorResponse"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflicto de solapamiento",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/app__schemas__tarifario__ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Error interno del servidor",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/app__schemas__tarifario__ErrorResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/tarifario/{tarifa_id}": {
+      "get": {
+        "tags": [
+          "Tarifario"
+        ],
+        "summary": "Obtener detalle de tarifa",
+        "description": "Obtiene la información completa de una tarifa por su ID",
+        "operationId": "obtener_tarifa_api_v1_tarifario__tarifa_id__get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "tarifa_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "description": "ID de la tarifa",
+              "title": "Tarifa Id"
+            },
+            "description": "ID de la tarifa"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/app__schemas__tarifario__ApiResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Tarifa, Sede o Cancha no encontrada",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/app__schemas__tarifario__ErrorResponse"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflicto de solapamiento",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/app__schemas__tarifario__ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Error interno del servidor",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/app__schemas__tarifario__ErrorResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "patch": {
+        "tags": [
+          "Tarifario"
+        ],
+        "summary": "Actualizar tarifa",
+        "description": "Actualiza campos específicos de una tarifa existente",
+        "operationId": "actualizar_tarifa_api_v1_tarifario__tarifa_id__patch",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "tarifa_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "description": "ID de la tarifa",
+              "title": "Tarifa Id"
+            },
+            "description": "ID de la tarifa"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TarifarioUpdate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/app__schemas__tarifario__ApiResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Tarifa, Sede o Cancha no encontrada",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/app__schemas__tarifario__ErrorResponse"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflicto de solapamiento",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/app__schemas__tarifario__ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Error interno del servidor",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/app__schemas__tarifario__ErrorResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Tarifario"
+        ],
+        "summary": "Eliminar tarifa",
+        "description": "Elimina una tarifa si no está en uso",
+        "operationId": "eliminar_tarifa_api_v1_tarifario__tarifa_id__delete",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "tarifa_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "description": "ID de la tarifa",
+              "title": "Tarifa Id"
+            },
+            "description": "ID de la tarifa"
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "404": {
+            "description": "Tarifa, Sede o Cancha no encontrada",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/app__schemas__tarifario__ErrorResponse"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflicto de solapamiento",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/app__schemas__tarifario__ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Error interno del servidor",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/app__schemas__tarifario__ErrorResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/disponibilidad": {
+      "get": {
+        "tags": [
+          "Disponibilidad"
+        ],
+        "summary": "Consultar disponibilidad de cancha",
+        "description": "Calcula disponibilidad considerando zona horaria, horarios de apertura y buffer",
+        "operationId": "consultar_disponibilidad_api_v1_disponibilidad_get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "fecha",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "description": "Fecha a consultar (YYYY-MM-DD)",
+              "title": "Fecha"
+            },
+            "description": "Fecha a consultar (YYYY-MM-DD)",
+            "example": "2025-07-31"
+          },
+          {
+            "name": "sede_id",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "description": "ID de la sede",
+              "title": "Sede Id"
+            },
+            "description": "ID de la sede",
+            "example": "abc123-..."
+          },
+          {
+            "name": "cancha_id",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "description": "ID de la cancha",
+              "title": "Cancha Id"
+            },
+            "description": "ID de la cancha",
+            "example": "xyz789-..."
+          },
+          {
+            "name": "duracion_slot",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 240,
+              "minimum": 15,
+              "description": "Duración de cada slot en minutos (15-240)",
+              "default": 60,
+              "title": "Duracion Slot"
+            },
+            "description": "Duración de cada slot en minutos (15-240)"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/app__schemas__disponibilidad__ApiResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Sede o Cancha no encontrada",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/app__schemas__disponibilidad__ErrorResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Parámetros inválidos",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/app__schemas__disponibilidad__ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Error interno del servidor",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/app__schemas__disponibilidad__ErrorResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/usuarios/perfil": {
+      "get": {
+        "tags": [
+          "Usuarios"
+        ],
+        "summary": "Consultar perfil autenticado",
+        "description": "Endpoint protegido con JWT y RBAC que retorna información del usuario autenticado.",
+        "operationId": "obtener_perfil_api_v1_usuarios_perfil_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserProfileResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/reservas": {
+      "post": {
+        "tags": [
+          "Reservas"
+        ],
+        "summary": "Crear pre-reserva HOLD",
+        "description": "Bloquea temporalmente un horario aplicando TTL e idempotencia.",
+        "operationId": "crear_hold_api_v1_reservas_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReservaHoldRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReservaApiResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/reservas/{reserva_id}/confirmar": {
+      "post": {
+        "tags": [
+          "Reservas"
+        ],
+        "summary": "Confirmar pre-reserva",
+        "description": "Confirma una reserva en HOLD si está vigente e idempotente.",
+        "operationId": "confirmar_reserva_api_v1_reservas__reserva_id__confirmar_post",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "reserva_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Reserva Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReservaConfirmRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReservaConfirmResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/reservas/{reserva_id}/cancelar": {
+      "post": {
+        "tags": [
+          "Reservas"
+        ],
+        "summary": "Cancelar reserva",
+        "description": "Aplica la política de cancelación y genera solicitud de reembolso.",
+        "operationId": "cancelar_reserva_api_v1_reservas__reserva_id__cancelar_post",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "reserva_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Reserva Id"
+            }
+          },
+          {
+            "name": "motivo",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Motivo de la cancelación",
+              "title": "Motivo"
+            },
+            "description": "Motivo de la cancelación"
+          },
+          {
+            "name": "clave_idempotencia",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Clave Idempotencia"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "anyOf": [
+                  {
+                    "$ref": "#/components/schemas/ReservaCancelRequest"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "title": "Payload"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReservaCancelResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/reservas/{reserva_id}/reprogramar": {
+      "post": {
+        "tags": [
+          "Reservas"
+        ],
+        "summary": "Reprogramar reserva confirmada",
+        "description": "Operaci��n at��mica: marca la reserva original y crea una nueva confirmada con la franja solicitada.",
+        "operationId": "reprogramar_reserva_api_v1_reservas__reserva_id__reprogramar_post",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "reserva_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Reserva Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReservaReprogramarRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReservaReprogramarResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/": {
+      "get": {
+        "summary": "Root",
+        "description": "Endpoint de bienvenida.",
+        "operationId": "root__get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        }
+      }
+    },
+    "/items/{item_id}": {
+      "get": {
+        "summary": "Read Item",
+        "description": "Ejemplo con parametros de ruta y query.",
+        "operationId": "read_item_items__item_id__get",
+        "parameters": [
+          {
+            "name": "item_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Item Id"
+            }
+          },
+          {
+            "name": "q",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Q"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/health": {
+      "get": {
+        "summary": "Health Check",
+        "description": "Verifica estado general (DB) y uptime (liveness + readiness ligera).",
+        "operationId": "health_check_health_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        }
+      }
+    },
+    "/soap/info": {
+      "get": {
+        "summary": "Soap Info",
+        "description": "Informacion sobre servicios SOAP disponibles.",
+        "operationId": "soap_info_soap_info_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        }
+      }
+    },
+    "/docs/info": {
+      "get": {
+        "summary": "Docs Info",
+        "description": "Ubicaciones de la documentacion y contratos.",
+        "operationId": "docs_info_docs_info_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "CanchaCreate": {
+        "properties": {
+          "nombre": {
+            "type": "string",
+            "maxLength": 100,
+            "minLength": 3,
+            "title": "Nombre",
+            "description": "Nombre de la cancha"
+          },
+          "tipo_superficie": {
+            "$ref": "#/components/schemas/TipoSuperficie",
+            "description": "Tipo de superficie de la cancha"
+          },
+          "estado": {
+            "$ref": "#/components/schemas/EstadoCancha",
+            "description": "Estado de la cancha (activo o mantenimiento)",
+            "default": "activo"
+          }
+        },
+        "type": "object",
+        "required": [
+          "nombre",
+          "tipo_superficie"
+        ],
+        "title": "CanchaCreate",
+        "description": "Schema para crear una cancha",
+        "example": {
+          "estado": "activo",
+          "nombre": "Cancha 1",
+          "tipo_superficie": "césped"
+        }
+      },
+      "CanchaListResponse": {
+        "properties": {
+          "total": {
+            "type": "integer",
+            "title": "Total"
+          },
+          "canchas": {
+            "items": {
+              "$ref": "#/components/schemas/CanchaResponse"
+            },
+            "type": "array",
+            "title": "Canchas"
+          }
+        },
+        "type": "object",
+        "required": [
+          "total",
+          "canchas"
+        ],
+        "title": "CanchaListResponse",
+        "description": "Schema de respuesta para lista de canchas"
+      },
+      "CanchaResponse": {
+        "properties": {
+          "cancha_id": {
+            "type": "string",
+            "title": "Cancha Id"
+          },
+          "sede_id": {
+            "type": "string",
+            "title": "Sede Id"
+          },
+          "nombre": {
+            "type": "string",
+            "title": "Nombre"
+          },
+          "tipo_superficie": {
+            "type": "string",
+            "title": "Tipo Superficie"
+          },
+          "estado": {
+            "type": "string",
+            "title": "Estado"
+          },
+          "created_at": {
+            "type": "string",
+            "title": "Created At"
+          },
+          "updated_at": {
+            "type": "string",
+            "title": "Updated At"
+          },
+          "activo": {
+            "type": "boolean",
+            "title": "Activo"
+          }
+        },
+        "type": "object",
+        "required": [
+          "cancha_id",
+          "sede_id",
+          "nombre",
+          "tipo_superficie",
+          "estado",
+          "created_at",
+          "updated_at",
+          "activo"
+        ],
+        "title": "CanchaResponse",
+        "description": "Schema de respuesta de cancha"
+      },
+      "CanchaUpdate": {
+        "properties": {
+          "nombre": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 100,
+                "minLength": 3
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Nombre"
+          },
+          "tipo_superficie": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/TipoSuperficie"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "estado": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/EstadoCancha"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "activo": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Activo"
+          }
+        },
+        "type": "object",
+        "title": "CanchaUpdate",
+        "description": "Schema para actualizar una cancha (campos opcionales)",
+        "example": {
+          "estado": "mantenimiento",
+          "tipo_superficie": "sintético"
+        }
+      },
+      "DiferenciaPrecio": {
+        "properties": {
+          "monto": {
+            "type": "number",
+            "title": "Monto"
+          },
+          "moneda": {
+            "type": "string",
+            "title": "Moneda"
+          },
+          "tipo": {
+            "type": "string",
+            "title": "Tipo"
+          }
+        },
+        "type": "object",
+        "required": [
+          "monto",
+          "moneda",
+          "tipo"
+        ],
+        "title": "DiferenciaPrecio"
+      },
+      "DisponibilidadResponse": {
+        "properties": {
+          "fecha": {
+            "type": "string",
+            "title": "Fecha",
+            "description": "Fecha consultada (YYYY-MM-DD)"
+          },
+          "sede_id": {
+            "type": "string",
+            "title": "Sede Id"
+          },
+          "cancha_id": {
+            "type": "string",
+            "title": "Cancha Id"
+          },
+          "sede_nombre": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Sede Nombre"
+          },
+          "cancha_nombre": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Cancha Nombre"
+          },
+          "zona_horaria": {
+            "type": "string",
+            "title": "Zona Horaria",
+            "description": "Zona horaria de la sede"
+          },
+          "horario_apertura": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Horario Apertura",
+            "description": "Horario de apertura del día consultado"
+          },
+          "minutos_buffer": {
+            "type": "integer",
+            "title": "Minutos Buffer",
+            "description": "Minutos de buffer entre reservas"
+          },
+          "slots": {
+            "items": {
+              "$ref": "#/components/schemas/SlotDisponibilidad"
+            },
+            "type": "array",
+            "title": "Slots",
+            "description": "Lista de slots de tiempo"
+          },
+          "total_slots": {
+            "type": "integer",
+            "title": "Total Slots",
+            "description": "Total de slots en el día"
+          },
+          "slots_disponibles": {
+            "type": "integer",
+            "title": "Slots Disponibles",
+            "description": "Número de slots disponibles"
+          },
+          "slots_ocupados": {
+            "type": "integer",
+            "title": "Slots Ocupados",
+            "description": "Número de slots ocupados"
+          },
+          "dia_cerrado": {
+            "type": "boolean",
+            "title": "Dia Cerrado",
+            "description": "Indica si la sede está cerrada ese día",
+            "default": false
+          }
+        },
+        "type": "object",
+        "required": [
+          "fecha",
+          "sede_id",
+          "cancha_id",
+          "zona_horaria",
+          "minutos_buffer",
+          "slots",
+          "total_slots",
+          "slots_disponibles",
+          "slots_ocupados"
+        ],
+        "title": "DisponibilidadResponse",
+        "description": "Schema de respuesta de disponibilidad",
+        "example": {
+          "cancha_id": "xyz789...",
+          "cancha_nombre": "Cancha 1",
+          "dia_cerrado": false,
+          "fecha": "2025-07-31",
+          "horario_apertura": "08:00-22:00",
+          "minutos_buffer": 10,
+          "sede_id": "abc123...",
+          "sede_nombre": "Complejo Norte",
+          "slots": [
+            {
+              "hora_fin": "09:00",
+              "hora_inicio": "08:00",
+              "reservable": true
+            }
+          ],
+          "slots_disponibles": 10,
+          "slots_ocupados": 4,
+          "total_slots": 14,
+          "zona_horaria": "America/Bogota"
+        }
+      },
+      "EstadoCancha": {
+        "type": "string",
+        "enum": [
+          "activo",
+          "mantenimiento"
+        ],
+        "title": "EstadoCancha",
+        "description": "Estados posibles de una cancha"
+      },
+      "HTTPValidationError": {
+        "properties": {
+          "detail": {
+            "items": {
+              "$ref": "#/components/schemas/ValidationError"
+            },
+            "type": "array",
+            "title": "Detail"
+          }
+        },
+        "type": "object",
+        "title": "HTTPValidationError"
+      },
+      "LoginRequest": {
+        "properties": {
+          "correo": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "email"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Correo"
+          },
+          "telefono": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Telefono"
+          },
+          "contrasena": {
+            "type": "string",
+            "title": "Contrasena"
+          }
+        },
+        "type": "object",
+        "required": [
+          "contrasena"
+        ],
+        "title": "LoginRequest"
+      },
+      "ReservaApiResponse": {
+        "properties": {
+          "mensaje": {
+            "type": "string",
+            "title": "Mensaje"
+          },
+          "data": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ReservaHoldData"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "success": {
+            "type": "boolean",
+            "title": "Success"
+          }
+        },
+        "type": "object",
+        "required": [
+          "mensaje",
+          "data",
+          "success"
+        ],
+        "title": "ReservaApiResponse"
+      },
+      "ReservaCancelData": {
+        "properties": {
+          "reserva_id": {
+            "type": "string",
+            "title": "Reserva Id"
+          },
+          "estado": {
+            "type": "string",
+            "title": "Estado"
+          },
+          "reembolso": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Reembolso"
+          }
+        },
+        "type": "object",
+        "required": [
+          "reserva_id",
+          "estado",
+          "reembolso"
+        ],
+        "title": "ReservaCancelData"
+      },
+      "ReservaCancelRequest": {
+        "properties": {
+          "motivo": {
+            "type": "string",
+            "title": "Motivo"
+          },
+          "clave_idempotencia": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Clave Idempotencia"
+          }
+        },
+        "type": "object",
+        "required": [
+          "motivo"
+        ],
+        "title": "ReservaCancelRequest"
+      },
+      "ReservaCancelResponse": {
+        "properties": {
+          "mensaje": {
+            "type": "string",
+            "title": "Mensaje"
+          },
+          "data": {
+            "$ref": "#/components/schemas/ReservaCancelData"
+          },
+          "success": {
+            "type": "boolean",
+            "title": "Success",
+            "default": true
+          }
+        },
+        "type": "object",
+        "required": [
+          "mensaje",
+          "data"
+        ],
+        "title": "ReservaCancelResponse"
+      },
+      "ReservaConfirmData": {
+        "properties": {
+          "reserva_id": {
+            "type": "string",
+            "title": "Reserva Id"
+          },
+          "estado": {
+            "type": "string",
+            "title": "Estado"
+          },
+          "total": {
+            "type": "number",
+            "title": "Total"
+          },
+          "moneda": {
+            "type": "string",
+            "title": "Moneda"
+          }
+        },
+        "type": "object",
+        "required": [
+          "reserva_id",
+          "estado",
+          "total",
+          "moneda"
+        ],
+        "title": "ReservaConfirmData"
+      },
+      "ReservaConfirmRequest": {
+        "properties": {
+          "clave_idempotencia": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Clave Idempotencia"
+          }
+        },
+        "type": "object",
+        "title": "ReservaConfirmRequest"
+      },
+      "ReservaConfirmResponse": {
+        "properties": {
+          "mensaje": {
+            "type": "string",
+            "title": "Mensaje"
+          },
+          "data": {
+            "$ref": "#/components/schemas/ReservaConfirmData"
+          },
+          "success": {
+            "type": "boolean",
+            "title": "Success",
+            "default": true
+          }
+        },
+        "type": "object",
+        "required": [
+          "mensaje",
+          "data"
+        ],
+        "title": "ReservaConfirmResponse"
+      },
+      "ReservaHoldData": {
+        "properties": {
+          "reserva_id": {
+            "type": "string",
+            "title": "Reserva Id"
+          },
+          "estado": {
+            "type": "string",
+            "title": "Estado"
+          },
+          "sede_id": {
+            "type": "string",
+            "title": "Sede Id"
+          },
+          "cancha_id": {
+            "type": "string",
+            "title": "Cancha Id"
+          },
+          "inicio": {
+            "type": "string",
+            "title": "Inicio"
+          },
+          "fin": {
+            "type": "string",
+            "title": "Fin"
+          },
+          "vence_hold": {
+            "type": "string",
+            "title": "Vence Hold"
+          },
+          "total": {
+            "type": "number",
+            "title": "Total"
+          },
+          "moneda": {
+            "type": "string",
+            "title": "Moneda"
+          }
+        },
+        "type": "object",
+        "required": [
+          "reserva_id",
+          "estado",
+          "sede_id",
+          "cancha_id",
+          "inicio",
+          "fin",
+          "vence_hold",
+          "total",
+          "moneda"
+        ],
+        "title": "ReservaHoldData"
+      },
+      "ReservaHoldRequest": {
+        "properties": {
+          "sede_id": {
+            "type": "string",
+            "title": "Sede Id"
+          },
+          "cancha_id": {
+            "type": "string",
+            "title": "Cancha Id"
+          },
+          "fecha": {
+            "type": "string",
+            "format": "date",
+            "title": "Fecha"
+          },
+          "hora_inicio": {
+            "type": "string",
+            "pattern": "^\\d{2}:\\d{2}$",
+            "title": "Hora Inicio"
+          },
+          "hora_fin": {
+            "type": "string",
+            "pattern": "^\\d{2}:\\d{2}$",
+            "title": "Hora Fin"
+          },
+          "clave_idempotencia": {
+            "type": "string",
+            "maxLength": 120,
+            "minLength": 6,
+            "title": "Clave Idempotencia"
+          }
+        },
+        "type": "object",
+        "required": [
+          "sede_id",
+          "cancha_id",
+          "fecha",
+          "hora_inicio",
+          "hora_fin",
+          "clave_idempotencia"
+        ],
+        "title": "ReservaHoldRequest"
+      },
+      "ReservaReprogramarData": {
+        "properties": {
+          "reserva_original": {
+            "type": "string",
+            "title": "Reserva Original"
+          },
+          "reserva_nueva": {
+            "type": "string",
+            "title": "Reserva Nueva"
+          },
+          "diferencia": {
+            "$ref": "#/components/schemas/DiferenciaPrecio"
+          }
+        },
+        "type": "object",
+        "required": [
+          "reserva_original",
+          "reserva_nueva",
+          "diferencia"
+        ],
+        "title": "ReservaReprogramarData"
+      },
+      "ReservaReprogramarRequest": {
+        "properties": {
+          "fecha": {
+            "type": "string",
+            "format": "date",
+            "title": "Fecha"
+          },
+          "hora_inicio": {
+            "type": "string",
+            "pattern": "^\\d{2}:\\d{2}$",
+            "title": "Hora Inicio"
+          },
+          "hora_fin": {
+            "type": "string",
+            "pattern": "^\\d{2}:\\d{2}$",
+            "title": "Hora Fin"
+          },
+          "cancha_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Cancha Id"
+          }
+        },
+        "type": "object",
+        "required": [
+          "fecha",
+          "hora_inicio",
+          "hora_fin"
+        ],
+        "title": "ReservaReprogramarRequest"
+      },
+      "ReservaReprogramarResponse": {
+        "properties": {
+          "mensaje": {
+            "type": "string",
+            "title": "Mensaje"
+          },
+          "data": {
+            "$ref": "#/components/schemas/ReservaReprogramarData"
+          },
+          "success": {
+            "type": "boolean",
+            "title": "Success",
+            "default": true
+          }
+        },
+        "type": "object",
+        "required": [
+          "mensaje",
+          "data"
+        ],
+        "title": "ReservaReprogramarResponse"
+      },
+      "SedeCreate": {
+        "properties": {
+          "nombre": {
+            "type": "string",
+            "maxLength": 200,
+            "minLength": 3,
+            "title": "Nombre",
+            "description": "Nombre de la sede"
+          },
+          "direccion": {
+            "type": "string",
+            "maxLength": 500,
+            "minLength": 10,
+            "title": "Direccion",
+            "description": "Dirección física de la sede"
+          },
+          "zona_horaria": {
+            "type": "string",
+            "title": "Zona Horaria",
+            "description": "Zona horaria IANA",
+            "default": "America/Bogota"
+          },
+          "horario_apertura_json": {
+            "additionalProperties": {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            "type": "object",
+            "title": "Horario Apertura Json",
+            "description": "Horarios de apertura por día. Formato: {'lunes': ['08:00-20:00']}"
+          },
+          "minutos_buffer": {
+            "type": "integer",
+            "maximum": 60.0,
+            "minimum": 0.0,
+            "title": "Minutos Buffer",
+            "description": "Minutos de buffer entre reservas (0-60)",
+            "default": 10
+          }
+        },
+        "type": "object",
+        "required": [
+          "nombre",
+          "direccion",
+          "horario_apertura_json"
+        ],
+        "title": "SedeCreate",
+        "description": "Schema para crear una sede",
+        "example": {
+          "direccion": "Cra 1 # 23-45",
+          "horario_apertura_json": {
+            "domingo": [
+              "09:00-18:00"
+            ],
+            "jueves": [
+              "08:00-20:00"
+            ],
+            "lunes": [
+              "08:00-20:00"
+            ],
+            "martes": [
+              "08:00-20:00"
+            ],
+            "miercoles": [
+              "08:00-20:00"
+            ],
+            "sabado": [
+              "09:00-22:00"
+            ],
+            "viernes": [
+              "08:00-22:00"
+            ]
+          },
+          "minutos_buffer": 10,
+          "nombre": "Complejo Norte",
+          "zona_horaria": "America/Bogota"
+        }
+      },
+      "SedeListResponse": {
+        "properties": {
+          "total": {
+            "type": "integer",
+            "title": "Total"
+          },
+          "page": {
+            "type": "integer",
+            "title": "Page"
+          },
+          "page_size": {
+            "type": "integer",
+            "title": "Page Size"
+          },
+          "sedes": {
+            "items": {
+              "$ref": "#/components/schemas/SedeResponse"
+            },
+            "type": "array",
+            "title": "Sedes"
+          }
+        },
+        "type": "object",
+        "required": [
+          "total",
+          "page",
+          "page_size",
+          "sedes"
+        ],
+        "title": "SedeListResponse",
+        "description": "Schema de respuesta para lista de sedes con paginación"
+      },
+      "SedeResponse": {
+        "properties": {
+          "sede_id": {
+            "type": "string",
+            "title": "Sede Id"
+          },
+          "nombre": {
+            "type": "string",
+            "title": "Nombre"
+          },
+          "direccion": {
+            "type": "string",
+            "title": "Direccion"
+          },
+          "zona_horaria": {
+            "type": "string",
+            "title": "Zona Horaria"
+          },
+          "horario_apertura_json": {
+            "additionalProperties": {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            "type": "object",
+            "title": "Horario Apertura Json"
+          },
+          "minutos_buffer": {
+            "type": "integer",
+            "title": "Minutos Buffer"
+          },
+          "created_at": {
+            "type": "string",
+            "title": "Created At"
+          },
+          "updated_at": {
+            "type": "string",
+            "title": "Updated At"
+          },
+          "activo": {
+            "type": "boolean",
+            "title": "Activo"
+          }
+        },
+        "type": "object",
+        "required": [
+          "sede_id",
+          "nombre",
+          "direccion",
+          "zona_horaria",
+          "horario_apertura_json",
+          "minutos_buffer",
+          "created_at",
+          "updated_at",
+          "activo"
+        ],
+        "title": "SedeResponse",
+        "description": "Schema de respuesta de sede"
+      },
+      "SedeUpdate": {
+        "properties": {
+          "nombre": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 200,
+                "minLength": 3
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Nombre"
+          },
+          "direccion": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 500,
+                "minLength": 10
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Direccion"
+          },
+          "zona_horaria": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Zona Horaria"
+          },
+          "horario_apertura_json": {
+            "anyOf": [
+              {
+                "additionalProperties": {
+                  "items": {
+                    "type": "string"
+                  },
+                  "type": "array"
+                },
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Horario Apertura Json"
+          },
+          "minutos_buffer": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "maximum": 60.0,
+                "minimum": 0.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Minutos Buffer"
+          },
+          "activo": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Activo"
+          }
+        },
+        "type": "object",
+        "title": "SedeUpdate",
+        "description": "Schema para actualizar una sede (campos opcionales)",
+        "example": {
+          "horario_apertura_json": {
+            "lunes": [
+              "08:00-21:00"
+            ]
+          },
+          "minutos_buffer": 15
+        }
+      },
+      "SlotDisponibilidad": {
+        "properties": {
+          "hora_inicio": {
+            "type": "string",
+            "title": "Hora Inicio",
+            "description": "Hora de inicio del slot (HH:MM)"
+          },
+          "hora_fin": {
+            "type": "string",
+            "title": "Hora Fin",
+            "description": "Hora de fin del slot (HH:MM)"
+          },
+          "reservable": {
+            "type": "boolean",
+            "title": "Reservable",
+            "description": "Indica si el slot está disponible para reservar"
+          },
+          "motivo": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Motivo",
+            "description": "Motivo por el que no es reservable (si aplica)"
+          }
+        },
+        "type": "object",
+        "required": [
+          "hora_inicio",
+          "hora_fin",
+          "reservable"
+        ],
+        "title": "SlotDisponibilidad",
+        "description": "Schema de un slot de tiempo",
+        "example": {
+          "hora_fin": "09:00",
+          "hora_inicio": "08:00",
+          "reservable": true
+        }
+      },
+      "TarifaResolverData": {
+        "properties": {
+          "origen": {
+            "type": "string",
+            "enum": [
+              "cancha",
+              "sede"
+            ],
+            "title": "Origen"
+          },
+          "tarifa_id": {
+            "type": "string",
+            "title": "Tarifa Id"
+          },
+          "moneda": {
+            "type": "string",
+            "title": "Moneda"
+          },
+          "precio_por_bloque": {
+            "type": "number",
+            "title": "Precio Por Bloque"
+          }
+        },
+        "type": "object",
+        "required": [
+          "origen",
+          "tarifa_id",
+          "moneda",
+          "precio_por_bloque"
+        ],
+        "title": "TarifaResolverData"
+      },
+      "TarifaResolverResponse": {
+        "properties": {
+          "mensaje": {
+            "type": "string",
+            "title": "Mensaje"
+          },
+          "data": {
+            "$ref": "#/components/schemas/TarifaResolverData"
+          },
+          "success": {
+            "type": "boolean",
+            "title": "Success",
+            "default": true
+          }
+        },
+        "type": "object",
+        "required": [
+          "mensaje",
+          "data"
+        ],
+        "title": "TarifaResolverResponse"
+      },
+      "TarifarioCreate": {
+        "properties": {
+          "sede_id": {
+            "type": "string",
+            "title": "Sede Id",
+            "description": "ID de la sede (obligatorio)"
+          },
+          "cancha_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Cancha Id",
+            "description": "ID de la cancha (opcional - null = tarifa general de sede)"
+          },
+          "dia_semana": {
+            "type": "integer",
+            "maximum": 6.0,
+            "minimum": 0.0,
+            "title": "Dia Semana",
+            "description": "Día de la semana: 0=Lunes, 1=Martes, ..., 6=Domingo"
+          },
+          "hora_inicio": {
+            "type": "string",
+            "title": "Hora Inicio",
+            "description": "Hora de inicio en formato HH:MM (24h)"
+          },
+          "hora_fin": {
+            "type": "string",
+            "title": "Hora Fin",
+            "description": "Hora de fin en formato HH:MM (24h)"
+          },
+          "precio_por_bloque": {
+            "anyOf": [
+              {
+                "type": "number",
+                "exclusiveMinimum": 0.0
+              },
+              {
+                "type": "string",
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$"
+              }
+            ],
+            "title": "Precio Por Bloque",
+            "description": "Precio por bloque de tiempo (debe ser positivo)"
+          },
+          "moneda": {
+            "type": "string",
+            "title": "Moneda",
+            "description": "Código de moneda ISO 4217 (3 letras mayúsculas)",
+            "default": "COP"
+          }
+        },
+        "type": "object",
+        "required": [
+          "sede_id",
+          "dia_semana",
+          "hora_inicio",
+          "hora_fin",
+          "precio_por_bloque"
+        ],
+        "title": "TarifarioCreate",
+        "description": "Schema para crear una tarifa",
+        "example": {
+          "dia_semana": 2,
+          "hora_fin": "20:00",
+          "hora_inicio": "18:00",
+          "moneda": "COP",
+          "precio_por_bloque": 120000,
+          "sede_id": "abc123-..."
+        }
+      },
+      "TarifarioListResponse": {
+        "properties": {
+          "total": {
+            "type": "integer",
+            "title": "Total"
+          },
+          "tarifas": {
+            "items": {
+              "$ref": "#/components/schemas/TarifarioResponse"
+            },
+            "type": "array",
+            "title": "Tarifas"
+          }
+        },
+        "type": "object",
+        "required": [
+          "total",
+          "tarifas"
+        ],
+        "title": "TarifarioListResponse",
+        "description": "Schema de respuesta para lista de tarifas"
+      },
+      "TarifarioResponse": {
+        "properties": {
+          "tarifa_id": {
+            "type": "string",
+            "title": "Tarifa Id",
+            "description": "Identificador único de la tarifa"
+          },
+          "sede_id": {
+            "type": "string",
+            "title": "Sede Id"
+          },
+          "cancha_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Cancha Id"
+          },
+          "dia_semana": {
+            "type": "integer",
+            "title": "Dia Semana"
+          },
+          "hora_inicio": {
+            "type": "string",
+            "title": "Hora Inicio"
+          },
+          "hora_fin": {
+            "type": "string",
+            "title": "Hora Fin"
+          },
+          "precio_por_bloque": {
+            "type": "number",
+            "title": "Precio Por Bloque"
+          },
+          "moneda": {
+            "type": "string",
+            "title": "Moneda"
+          },
+          "created_at": {
+            "type": "string",
+            "title": "Created At"
+          },
+          "updated_at": {
+            "type": "string",
+            "title": "Updated At"
+          },
+          "activo": {
+            "type": "boolean",
+            "title": "Activo"
+          }
+        },
+        "type": "object",
+        "required": [
+          "tarifa_id",
+          "sede_id",
+          "cancha_id",
+          "dia_semana",
+          "hora_inicio",
+          "hora_fin",
+          "precio_por_bloque",
+          "moneda",
+          "created_at",
+          "updated_at",
+          "activo"
+        ],
+        "title": "TarifarioResponse",
+        "description": "Schema de respuesta de tarifa"
+      },
+      "TarifarioUpdate": {
+        "properties": {
+          "dia_semana": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "maximum": 6.0,
+                "minimum": 0.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Dia Semana"
+          },
+          "hora_inicio": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Hora Inicio"
+          },
+          "hora_fin": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Hora Fin"
+          },
+          "precio_por_bloque": {
+            "anyOf": [
+              {
+                "type": "number",
+                "exclusiveMinimum": 0.0
+              },
+              {
+                "type": "string",
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Precio Por Bloque"
+          },
+          "moneda": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Moneda"
+          },
+          "activo": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Activo"
+          }
+        },
+        "type": "object",
+        "title": "TarifarioUpdate",
+        "description": "Schema para actualizar una tarifa (campos opcionales)",
+        "example": {
+          "moneda": "COP",
+          "precio_por_bloque": 150000
+        }
+      },
+      "TipoSuperficie": {
+        "type": "string",
+        "enum": [
+          "césped",
+          "sintético",
+          "cemento",
+          "madera"
+        ],
+        "title": "TipoSuperficie",
+        "description": "Tipos de superficie disponibles"
+      },
+      "TokensData": {
+        "properties": {
+          "access_token": {
+            "type": "string",
+            "title": "Access Token"
+          },
+          "refresh_token": {
+            "type": "string",
+            "title": "Refresh Token"
+          },
+          "token_type": {
+            "type": "string",
+            "title": "Token Type",
+            "default": "Bearer"
+          },
+          "expira_en_seg": {
+            "type": "integer",
+            "title": "Expira En Seg"
+          }
+        },
+        "type": "object",
+        "required": [
+          "access_token",
+          "refresh_token",
+          "expira_en_seg"
+        ],
+        "title": "TokensData"
+      },
+      "UserProfileData": {
+        "properties": {
+          "usuario_id": {
+            "type": "string",
+            "title": "Usuario Id"
+          },
+          "usuario": {
+            "type": "string",
+            "title": "Usuario"
+          },
+          "correo": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "email"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Correo"
+          },
+          "rol": {
+            "type": "string",
+            "title": "Rol"
+          }
+        },
+        "type": "object",
+        "required": [
+          "usuario_id",
+          "usuario",
+          "rol"
+        ],
+        "title": "UserProfileData"
+      },
+      "UserProfileResponse": {
+        "properties": {
+          "mensaje": {
+            "type": "string",
+            "title": "Mensaje"
+          },
+          "data": {
+            "$ref": "#/components/schemas/UserProfileData"
+          },
+          "success": {
+            "type": "boolean",
+            "title": "Success",
+            "default": true
+          }
+        },
+        "type": "object",
+        "required": [
+          "mensaje",
+          "data"
+        ],
+        "title": "UserProfileResponse",
+        "example": {
+          "data": {
+            "rol": "admin",
+            "usuario": "juanperez"
+          },
+          "mensaje": "Acceso permitido",
+          "success": true
+        }
+      },
+      "ValidationError": {
+        "properties": {
+          "loc": {
+            "items": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "integer"
+                }
+              ]
+            },
+            "type": "array",
+            "title": "Location"
+          },
+          "msg": {
+            "type": "string",
+            "title": "Message"
+          },
+          "type": {
+            "type": "string",
+            "title": "Error Type"
+          }
+        },
+        "type": "object",
+        "required": [
+          "loc",
+          "msg",
+          "type"
+        ],
+        "title": "ValidationError"
+      },
+      "app__schemas__auth__ApiResponse": {
+        "properties": {
+          "mensaje": {
+            "type": "string",
+            "title": "Mensaje"
+          },
+          "data": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/TokensData"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "success": {
+            "type": "boolean",
+            "title": "Success"
+          }
+        },
+        "type": "object",
+        "required": [
+          "mensaje",
+          "success"
+        ],
+        "title": "ApiResponse"
+      },
+      "app__schemas__cancha__ApiResponse": {
+        "properties": {
+          "mensaje": {
+            "type": "string",
+            "title": "Mensaje"
+          },
+          "data": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "$ref": "#/components/schemas/CanchaResponse"
+              },
+              {
+                "$ref": "#/components/schemas/CanchaListResponse"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Data"
+          },
+          "success": {
+            "type": "boolean",
+            "title": "Success"
+          }
+        },
+        "type": "object",
+        "required": [
+          "mensaje",
+          "success"
+        ],
+        "title": "ApiResponse",
+        "description": "Schema genérico de respuesta API",
+        "example": {
+          "data": {
+            "cancha_id": "123e4567-e89b-12d3-a456-426614174000",
+            "estado": "activo",
+            "nombre": "Cancha 1",
+            "sede_id": "abc123...",
+            "tipo_superficie": "césped"
+          },
+          "mensaje": "Cancha creada correctamente",
+          "success": true
+        }
+      },
+      "app__schemas__cancha__ErrorResponse": {
+        "properties": {
+          "error": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Error"
+          }
+        },
+        "type": "object",
+        "required": [
+          "error"
+        ],
+        "title": "ErrorResponse",
+        "description": "Schema de respuesta de error",
+        "example": {
+          "error": {
+            "code": "CONFLICTO_RELACIONAL",
+            "details": {
+              "reservas_futuras": 4
+            },
+            "message": "La cancha tiene reservas futuras"
+          }
+        }
+      },
+      "app__schemas__disponibilidad__ApiResponse": {
+        "properties": {
+          "mensaje": {
+            "type": "string",
+            "title": "Mensaje"
+          },
+          "data": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/DisponibilidadResponse"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "success": {
+            "type": "boolean",
+            "title": "Success"
+          }
+        },
+        "type": "object",
+        "required": [
+          "mensaje",
+          "success"
+        ],
+        "title": "ApiResponse",
+        "description": "Schema genérico de respuesta API",
+        "example": {
+          "data": {
+            "fecha": "2025-07-31",
+            "slots": []
+          },
+          "mensaje": "Disponibilidad calculada correctamente",
+          "success": true
+        }
+      },
+      "app__schemas__disponibilidad__ErrorResponse": {
+        "properties": {
+          "error": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Error"
+          }
+        },
+        "type": "object",
+        "required": [
+          "error"
+        ],
+        "title": "ErrorResponse",
+        "description": "Schema de respuesta de error",
+        "example": {
+          "error": {
+            "code": "CANCHA_NO_ENCONTRADA",
+            "details": {
+              "cancha_id": "xyz789..."
+            },
+            "message": "No se encontró la cancha especificada"
+          }
+        }
+      },
+      "app__schemas__sede__ApiResponse": {
+        "properties": {
+          "mensaje": {
+            "type": "string",
+            "title": "Mensaje"
+          },
+          "data": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "$ref": "#/components/schemas/SedeResponse"
+              },
+              {
+                "$ref": "#/components/schemas/SedeListResponse"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Data"
+          },
+          "success": {
+            "type": "boolean",
+            "title": "Success"
+          }
+        },
+        "type": "object",
+        "required": [
+          "mensaje",
+          "success"
+        ],
+        "title": "ApiResponse",
+        "description": "Schema genérico de respuesta API",
+        "example": {
+          "data": {
+            "nombre": "Complejo Norte",
+            "sede_id": "123e4567-e89b-12d3-a456-426614174000"
+          },
+          "mensaje": "Sede creada correctamente",
+          "success": true
+        }
+      },
+      "app__schemas__sede__ErrorResponse": {
+        "properties": {
+          "error": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Error"
+          }
+        },
+        "type": "object",
+        "required": [
+          "error"
+        ],
+        "title": "ErrorResponse",
+        "description": "Schema de respuesta de error",
+        "example": {
+          "error": {
+            "code": "CONFLICTO_RELACIONAL",
+            "details": {
+              "canchas": 3,
+              "reservas": 12
+            },
+            "message": "La sede tiene canchas o reservas asociadas"
+          }
+        }
+      },
+      "app__schemas__tarifario__ApiResponse": {
+        "properties": {
+          "mensaje": {
+            "type": "string",
+            "title": "Mensaje"
+          },
+          "data": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "$ref": "#/components/schemas/TarifarioResponse"
+              },
+              {
+                "$ref": "#/components/schemas/TarifarioListResponse"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Data"
+          },
+          "success": {
+            "type": "boolean",
+            "title": "Success"
+          }
+        },
+        "type": "object",
+        "required": [
+          "mensaje",
+          "success"
+        ],
+        "title": "ApiResponse",
+        "description": "Schema genérico de respuesta API",
+        "example": {
+          "data": {
+            "dia_semana": 2,
+            "hora_fin": "20:00",
+            "hora_inicio": "18:00",
+            "moneda": "COP",
+            "precio_por_bloque": 120000.0,
+            "sede_id": "abc123-...",
+            "tarifa_id": "123e4567-..."
+          },
+          "mensaje": "Tarifa creada correctamente",
+          "success": true
+        }
+      },
+      "app__schemas__tarifario__ErrorResponse": {
+        "properties": {
+          "error": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Error"
+          }
+        },
+        "type": "object",
+        "required": [
+          "error"
+        ],
+        "title": "ErrorResponse",
+        "description": "Schema de respuesta de error",
+        "example": {
+          "error": {
+            "code": "FRANJA_SOLAPADA",
+            "details": {
+              "tarifa_existente": "uuid123..."
+            },
+            "message": "Existe una tarifa que se cruza en la misma especificidad"
+          }
+        }
+      }
+    },
+    "securitySchemes": {
+      "HTTPBearer": {
+        "type": "http",
+        "scheme": "bearer"
+      }
+    }
+  }
+}
