@@ -4,6 +4,7 @@ Adaptado para SQLite (UUID como string)
 """
 
 from fastapi import APIRouter, Depends, HTTPException, status, Query, Path, Body
+from fastapi.responses import JSONResponse
 from sqlalchemy.orm import Session
 from typing import Optional
 import logging
@@ -16,8 +17,11 @@ from app.schemas.sede import (
     SedeResponse,
     ApiResponse,
     ErrorResponse,
+    HorarioValidacionRequest,
+    HorarioValidacionResponse,
 )
 from app.services.rbac import require_role_dependency
+from app.services.horario_validator import collect_horario_errors
 
 logger = logging.getLogger(__name__)
 
@@ -40,6 +44,35 @@ ADMIN_ONLY_DEP = require_role_dependency("admin")
 def get_sede_service(db: Session = Depends(get_db)) -> SedeService:
     """Dependencia para obtener instancia del servicio"""
     return SedeService(db)
+
+
+@router.post(
+    "/validar-horario",
+    response_model=HorarioValidacionResponse,
+    summary="Validar horario de apertura y zona horaria",
+    dependencies=[Depends(ADMIN_PERSONAL_DEP)],
+)
+async def validar_horario(
+    payload: HorarioValidacionRequest,
+) -> HorarioValidacionResponse:
+    errores = collect_horario_errors(
+        payload.zona_horaria, payload.horario_apertura_json
+    )
+    if errores:
+        return JSONResponse(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            content={
+                "mensaje": "Horario invalido",
+                "data": {"zona_horaria": payload.zona_horaria, "errores": errores},
+                "success": False,
+            },
+        )
+
+    return HorarioValidacionResponse(
+        mensaje="Horario valido",
+        data={"zona_horaria": payload.zona_horaria, "errores": []},
+        success=True,
+    )
 
 
 @router.post(

@@ -14,6 +14,7 @@ from sqlalchemy.orm import Session
 from app.repository.sede_repository import SedeRepository
 from app.schemas.sede import SedeCreate, SedeResponse
 from app.models.sede import Sede
+from app.services.horario_validator import ensure_horario_valido
 
 logger = logging.getLogger(__name__)
 
@@ -27,6 +28,10 @@ class SedeService:
 
     def crear_sede(self, sede_data: SedeCreate) -> Sede:
         """Crear una nueva sede"""
+        ensure_horario_valido(
+            sede_data.zona_horaria, sede_data.horario_apertura_json
+        )
+
         # Validar que el nombre no exista
         sede_existente = self.repository.obtener_por_nombre(sede_data.nombre)
         if sede_existente:
@@ -94,8 +99,8 @@ class SedeService:
 
     def actualizar_sede(self, sede_id: str, sede_data) -> Sede:
         """Actualizar una sede existente."""
-        sede = self.repository.actualizar(sede_id, sede_data)
-        if not sede:
+        sede_actual = self.repository.obtener_por_id(sede_id)
+        if not sede_actual:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail={
@@ -106,7 +111,22 @@ class SedeService:
                     }
                 },
             )
-        return sede
+
+        zona = (
+            sede_data.zona_horaria
+            if sede_data.zona_horaria is not None
+            else sede_actual.zona_horaria
+        )
+        horario = (
+            sede_data.horario_apertura_json
+            if sede_data.horario_apertura_json is not None
+            else json.loads(sede_actual.horario_apertura_json or "{}")
+            if isinstance(sede_actual.horario_apertura_json, str)
+            else sede_actual.horario_apertura_json or {}
+        )
+        ensure_horario_valido(zona, horario)
+
+        return self.repository.actualizar(sede_id, sede_data)
 
     def eliminar_sede(self, sede_id: str) -> None:
         """Eliminar (soft delete) una sede."""
