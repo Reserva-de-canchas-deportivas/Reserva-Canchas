@@ -1,3 +1,5 @@
+from datetime import datetime
+
 from fastapi import APIRouter, Depends
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from sqlalchemy.orm import Session
@@ -41,6 +43,11 @@ def login(payload: LoginRequest, db: Session = Depends(get_db)):
 
     if user.estado == "bloqueado":
         raise forbidden_error("Usuario bloqueado", code="USER_BLOCKED")
+
+    user.ultimo_login = datetime.utcnow()
+    db.add(user)
+    db.commit()
+    db.refresh(user)
 
     access_token, refresh_token, exp_s = auth_service.issue_tokens_for_user(user)
     return ApiResponse(

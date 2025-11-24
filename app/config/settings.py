@@ -9,6 +9,7 @@ class Settings(BaseSettings):
     # JWT settings
     access_token_expire_seconds: int = Field(default=900)  # 15 minutes
     refresh_token_expire_seconds: int = Field(default=60 * 60 * 24 * 7)  # 7 days
+    reset_token_expire_seconds: int = Field(default=900)  # 15 minutes
     jwt_algorithm: str = "RS256"
     hold_ttl_minutes: int = Field(default=10, ge=1, le=60)
     require_payment_capture: bool = Field(default=False)

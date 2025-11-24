@@ -25,6 +25,7 @@ class Usuario(Base):
         nullable=False,
         default="activo",
     )
+    ultimo_login = Column(DateTime, nullable=True)
     creado_en = Column(DateTime, nullable=False, default=datetime.utcnow)
 
     def __repr__(self) -> str:
