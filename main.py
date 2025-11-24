@@ -19,6 +19,7 @@ from app.config.routers import include_routers
 from app.database import SessionLocal, init_db
 from app.soap.soap_config import get_soap_info, setup_soap_services
 from app.services.reserva_service import ReservaService
+from app.repository.user_repository import seed_users
 
 request_id_ctx_var: ContextVar[str] = ContextVar("request_id", default="-")
 start_time = time.time()
@@ -142,6 +143,9 @@ app = create_app()
 
 # Inicializar DB en memoria al arranque (para health/readiness)
 init_db(create_all=True)
+# Seed de usuarios base (admin) para ambientes de prueba/demo
+with SessionLocal() as seed_db:
+    seed_users(seed_db)
 
 # Observabilidad basica
 configure_logging()
