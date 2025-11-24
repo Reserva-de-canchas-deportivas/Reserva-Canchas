@@ -15,8 +15,17 @@ class Usuario(Base):
     telefono = Column(String(30), unique=True, nullable=True)
     hash_contrasena = Column(String(255), nullable=False)
     zona_horaria = Column(String(64), nullable=False, default="America/Bogota")
-    rol = Column(Enum("cliente", "admin", "personal", name="rol_enum"), nullable=False, default="cliente")
-    estado = Column(Enum("activo", "inactivo", "bloqueado", name="estado_enum"), nullable=False, default="activo")
+    rol = Column(
+        Enum("cliente", "admin", "personal", name="rol_enum"),
+        nullable=False,
+        default="cliente",
+    )
+    estado = Column(
+        Enum("activo", "inactivo", "bloqueado", name="estado_enum"),
+        nullable=False,
+        default="activo",
+    )
+    ultimo_login = Column(DateTime, nullable=True)
     creado_en = Column(DateTime, nullable=False, default=datetime.utcnow)
 
     def __repr__(self) -> str:

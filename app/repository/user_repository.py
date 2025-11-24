@@ -39,3 +39,7 @@ def get_by_correo(db: Session, correo: str) -> Optional[Usuario]:
 
 def get_by_telefono(db: Session, telefono: str) -> Optional[Usuario]:
     return db.query(Usuario).filter(Usuario.telefono == telefono).first()
+
+
+def get_by_id(db: Session, user_id: str) -> Optional[Usuario]:
+    return db.query(Usuario).filter(Usuario.usuario_id == user_id).first()

@@ -1,0 +1,16 @@
+__pycache__
+*.pyc
+*.pyo
+*.pyd
+*.sqlite
+*.db
+.env
+.git
+.gitignore
+artifacts
+.coverage
+coverage.xml
+.cache
+.mypy_cache
+ruff_cache
+tests

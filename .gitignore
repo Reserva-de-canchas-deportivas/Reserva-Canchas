@@ -1,0 +1,20 @@
+# Bytecode / cache
+__pycache__/
+*.py[cod]
+
+# Virtual environments
+.venv/
+venv/
+env/
+
+# Environment variables / secrets
+.env
+
+# OS junk
+.DS_Store
+Thumbs.db
+
+# Test / coverage artifacts
+.coverage
+coverage.xml
+.pytest_cache/
