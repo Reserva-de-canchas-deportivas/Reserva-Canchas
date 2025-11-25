@@ -1,12 +1,18 @@
 from fastapi import FastAPI
 from fastapi.responses import JSONResponse
 
+# 🔥 IMPORTAR EL ROUTER DE PAGOS (NUEVO)
+from app.routers.payment_router import router as payment_router
+
 # Crear la instancia de FastAPI
 app = FastAPI(
     title="Mi API con FastAPI",
     description="API RESTful profesional",
     version="1.0.0"
 )
+
+# 🔥 INCLUIR EL ROUTER DE PAGOS (NUEVO)
+app.include_router(payment_router)
 
 # Ruta raíz
 @app.get("/")
@@ -16,8 +22,14 @@ async def root():
     """
     return {
         "message": "¡Bienvenido a mi API con FastAPI!",
-        "status": "online",
-        "version": "1.0.0"
+        "status": "online", 
+        "version": "1.0.0",
+        "endpoints_disponibles": [
+            "/docs",
+            "/health", 
+            "/api/v1/pagos/webhook",  # ← NUEVO ENDPOINT
+            "/api/v1/pagos/payments"  # ← NUEVO ENDPOINT
+        ]
     }
 
 # Endpoint con parámetros
