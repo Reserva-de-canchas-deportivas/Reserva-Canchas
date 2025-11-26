@@ -11,6 +11,8 @@ from app.routers.profile_router import router as profile_router
 
 from app.routers.pago_router import router as pago_router
 
+from app.routers.payment_router import router as payment_router
+
 
 def include_routers(app: FastAPI) -> None:
     app.include_router(auth_router)
@@ -26,4 +28,7 @@ def include_routers(app: FastAPI) -> None:
 routers = [
     
     pago_router,
+    payment_router,
 ]
+
+
