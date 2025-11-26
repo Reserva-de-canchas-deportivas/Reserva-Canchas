@@ -33,3 +33,4 @@ def get_db() -> Session:
 def init_db(create_all: bool = True):
     if create_all:
         Base.metadata.create_all(bind=engine)
+
