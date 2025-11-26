@@ -7,6 +7,7 @@ from app.routers.tarifario_router import router as tarifario_router
 from app.routers.disponibilidad_router import router as disponibilidad_router
 from app.routers.user_router import router as user_router
 from app.routers.reserva_router import router as reserva_router
+from app.routers.profile_router import router as profile_router
 
 
 def include_routers(app: FastAPI) -> None:
@@ -17,3 +18,4 @@ def include_routers(app: FastAPI) -> None:
     app.include_router(disponibilidad_router)
     app.include_router(user_router)
     app.include_router(reserva_router)
+    app.include_router(profile_router)

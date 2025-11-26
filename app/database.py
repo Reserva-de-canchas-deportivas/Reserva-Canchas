@@ -8,6 +8,7 @@ from app.models.cancha import Cancha  # noqa: F401
 from app.models.tarifario import Tarifario  # noqa: F401
 from app.models.reserva import Reserva  # noqa: F401
 from app.domain.security_models import ApiKey, SecurityAuditLog  # noqa: F401
+from app.domain.profile_model import PerfilUsuario  # noqa: F401
 
 # In-memory SQLite shared across threads for temporary data
 DATABASE_URL = "sqlite://"
