@@ -18,6 +18,10 @@ from app.schemas.reserva import (
 from app.services.reserva_service import ReservaService
 from app.services.rbac import require_role_dependency
 
+from app.domain.reserva_fsm import EstadoReserva, TransicionRequest, TransicionResponse
+from app.schemas.reserva_historial import ReservaHistorialResponse
+from app.services.reserva_service import ReservaEstadoService
+
 router = APIRouter(prefix="/api/v1/reservas", tags=["Reservas"])
 CLIENT_DEP = require_role_dependency("cliente", "personal", "admin")
 ADMIN_DEP = require_role_dependency("admin", "personal")
@@ -130,3 +134,55 @@ async def limpiar_holds_expirados(
     return ReservaCleanResponse(
         mensaje="Limpieza de HOLD ejecutada", data=data, success=True
     )
+
+
+@router.post(
+    "/{reserva_id}/transicionar",
+    response_model=TransicionResponse,
+    summary="Transicionar estado de reserva",
+    description="Cambia el estado de una reserva según el workflow definido",
+)
+async def transicionar_estado(
+    reserva_id: str,
+    payload: TransicionRequest,
+    db: Session = Depends(get_db),
+    current_user: Usuario = Depends(CLIENT_DEP),
+):
+    try:
+        servicio = ReservaEstadoService(db)
+        resultado = servicio.transicionar_estado(
+            reserva_id=reserva_id,
+            estado_nuevo=payload.estado_nuevo,
+            usuario_id=current_user.usuario_id
+        )
+        
+        return TransicionResponse(
+            mensaje="Estado actualizado correctamente",
+            data=resultado,
+            success=True
+        )
+    except Exception as e:
+        if "TRANSICION_INVALIDA" in str(e):
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT,
+                detail=str(e)
+            )
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=str(e)
+        )
+
+@router.get(
+    "/{reserva_id}/historial",
+    response_model=list[ReservaHistorialResponse],
+    summary="Obtener historial de estados",
+    description="Obtiene el historial completo de cambios de estado de una reserva",
+)
+async def obtener_historial_reserva(
+    reserva_id: str,
+    db: Session = Depends(get_db),
+    current_user: Usuario = Depends(CLIENT_DEP),
+):
+    servicio = ReservaEstadoService(db)
+    historial = servicio.obtener_historial(reserva_id)
+    return historial
