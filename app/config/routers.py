@@ -13,6 +13,8 @@ from app.routers.pago_router import router as pago_router
 
 from app.routers.payment_router import router as payment_router
 
+from app.routers.factura_router import router as factura_router
+
 
 def include_routers(app: FastAPI) -> None:
     app.include_router(auth_router)
@@ -29,6 +31,7 @@ routers = [
     
     pago_router,
     payment_router,
+    factura_router,
 ]
 
 
