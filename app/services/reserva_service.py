@@ -29,6 +29,10 @@ from app.schemas.reserva import (
 )
 from app.services.tarifario_service import TarifarioService
 
+from app.domain.reserva_fsm import ReservaFSM, EstadoReserva, TransicionInvalidaError
+from app.repository.reserva_historial_repository import ReservaHistorialRepository
+from app.schemas.reserva_historial import ReservaHistorialCreate
+
 
 class ReservaService:
     ESTADOS_ACTIVOS = ("hold", "pending", "confirmed")
@@ -638,3 +642,45 @@ class ReservaService:
         ahora = datetime.now(tz)
         delta = timedelta(minutes=settings.hold_ttl_minutes)
         return (ahora + delta).isoformat()
+
+
+
+class ReservaEstadoService:
+    def __init__(self, db: Session):
+        self.db = db
+        self.historial_repo = ReservaHistorialRepository(db)
+    
+    def transicionar_estado(self, reserva_id: str, estado_nuevo: EstadoReserva, usuario_id: str, comentario: str = None) -> dict:
+        reserva = self._obtener_reserva(reserva_id)
+        if not reserva:
+            raise ValueError("Reserva no encontrada")
+        
+        estado_actual = EstadoReserva(reserva.estado)
+        
+        if not ReservaFSM.validar_transicion(estado_actual, estado_nuevo):
+            raise TransicionInvalidaError(estado_actual, estado_nuevo)
+        
+        estado_anterior = reserva.estado
+        reserva.estado = estado_nuevo.value
+        self.db.commit()
+        
+        historial_data = ReservaHistorialCreate(
+            estado_anterior=estado_anterior,
+            estado_nuevo=estado_nuevo.value,
+            usuario_id=usuario_id,
+            comentario=comentario
+        )
+        self.historial_repo.crear(historial_data, reserva_id)
+        
+        return {
+            "reserva_id": reserva_id,
+            "estado_anterior": estado_anterior,
+            "estado_actual": estado_nuevo.value,
+            "fecha": reserva.updated_at.isoformat() if hasattr(reserva.updated_at, 'isoformat') else None
+        }
+    
+    def obtener_historial(self, reserva_id: str):
+        return self.historial_repo.obtener_por_reserva(reserva_id)
+    
+    def _obtener_reserva(self, reserva_id: str):
+        return self.db.query(Reserva).filter(Reserva.id == reserva_id).first()
