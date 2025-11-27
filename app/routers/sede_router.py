@@ -170,6 +170,9 @@ async def obtener_sede(
             data=SedeResponse.model_validate(sede),
             success=True,
         )
+    except HTTPException as exc:
+        # Propaga 404 u otros códigos específicos sin envolver en 500
+        raise exc
     except ValueError as e:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND, detail={"error": str(e)}

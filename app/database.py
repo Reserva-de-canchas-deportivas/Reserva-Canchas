@@ -9,6 +9,8 @@ from app.models.tarifario import Tarifario  # noqa: F401
 from app.models.reserva import Reserva  # noqa: F401
 from app.domain.security_models import ApiKey, SecurityAuditLog  # noqa: F401
 from app.domain.profile_model import PerfilUsuario  # noqa: F401
+from app.models.pago import Pago  # noqa: F401
+from app.models.factura import Factura  # noqa: F401
 
 # In-memory SQLite shared across threads for temporary data
 DATABASE_URL = "sqlite://"
@@ -33,3 +35,4 @@ def get_db() -> Session:
 def init_db(create_all: bool = True):
     if create_all:
         Base.metadata.create_all(bind=engine)
+
