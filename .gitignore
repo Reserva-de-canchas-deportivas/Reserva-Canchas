@@ -18,3 +18,7 @@ Thumbs.db
 .coverage
 coverage.xml
 .pytest_cache/
+
+# Local tooling / exports
+postman/
+facturas_temp/

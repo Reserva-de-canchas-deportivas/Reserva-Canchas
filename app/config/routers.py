@@ -25,13 +25,8 @@ def include_routers(app: FastAPI) -> None:
     app.include_router(user_router)
     app.include_router(reserva_router)
     app.include_router(profile_router)
-
-
-routers = [
-    
-    pago_router,
-    payment_router,
-    factura_router,
-]
+    app.include_router(pago_router)
+    app.include_router(payment_router)
+    app.include_router(factura_router)
 
 

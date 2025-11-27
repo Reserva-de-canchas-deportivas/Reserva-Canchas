@@ -1,14 +1,14 @@
 from sqlalchemy import Column, String, Numeric, DateTime, ForeignKey, CheckConstraint
 from sqlalchemy.sql import func
 from sqlalchemy.orm import relationship
-from sqlalchemy.ext.declarative import declarative_base
-Base = declarative_base()
-
 import uuid
+from enum import Enum
+from app.domain.user_model import Base
 
-class EstadoPago(str):
+
+class EstadoPago(str, Enum):
     INICIADO = "iniciado"
-    AUTORIZADO = "autorizado" 
+    AUTORIZADO = "autorizado"
     CAPTURADO = "capturado"
     FALLIDO = "fallido"
     REEMBOLSADO = "reembolsado"
@@ -31,16 +31,10 @@ class Pago(Base):
     
     __table_args__ = (
         CheckConstraint(
-            estado.in_([
-                EstadoPago.INICIADO,
-                EstadoPago.AUTORIZADO, 
-                EstadoPago.CAPTURADO,
-                EstadoPago.FALLIDO,
-                EstadoPago.REEMBOLSADO
-            ]),
-            name="check_estado_pago_valido"
+            "estado IN ('iniciado','autorizado','capturado','fallido','reembolsado')",
+            name="check_estado_pago_valido",
         ),
-        CheckConstraint(monto > 0, name="check_monto_positivo"),
+        CheckConstraint("monto > 0", name="check_monto_positivo"),
     )
     
     def __repr__(self):
