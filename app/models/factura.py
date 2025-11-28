@@ -1,6 +1,6 @@
 from sqlalchemy import Column, String, Integer, Float, DateTime, ForeignKey, Enum as SQLEnum
 from sqlalchemy.sql import func
-from app.database import Base
+from app.domain.user_model import Base
 import enum
 
 class EstadoFactura(str, enum.Enum):

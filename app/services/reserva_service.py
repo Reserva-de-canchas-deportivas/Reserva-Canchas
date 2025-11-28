@@ -1,4 +1,4 @@
-from __future__ import annotations
+﻿from __future__ import annotations
 
 import json
 from datetime import datetime, timedelta
@@ -32,6 +32,10 @@ from app.services.tarifario_service import TarifarioService
 from app.domain.reserva_fsm import ReservaFSM, EstadoReserva, TransicionInvalidaError
 from app.repository.reserva_historial_repository import ReservaHistorialRepository
 from app.schemas.reserva_historial import ReservaHistorialCreate
+
+from app.services.metrics_service import metrics_service, MetricsService
+from typing import List, Optional
+import time
 
 
 class ReservaService:
@@ -684,3 +688,6 @@ class ReservaEstadoService:
     
     def _obtener_reserva(self, reserva_id: str):
         return self.db.query(Reserva).filter(Reserva.id == reserva_id).first()
+    
+
+

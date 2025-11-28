@@ -1,8 +1,14 @@
-from sqlalchemy import create_engine
-from sqlalchemy.orm import sessionmaker, Session
-from sqlalchemy.pool import StaticPool
+"""
+Compat wrapper for database utilities.
 
+This keeps existing imports (`from app.database import get_db`) working while
+centralising the actual engine/session configuration in `app.utils.database`.
+"""
+
+from app.utils.database import engine, SessionLocal, get_db, init_db  # noqa: F401
 from app.domain.user_model import Base  # noqa: F401
+
+# Import models to register them in SQLAlchemy metadata
 from app.models.sede import Sede  # noqa: F401
 from app.models.cancha import Cancha  # noqa: F401
 from app.models.tarifario import Tarifario  # noqa: F401
@@ -11,28 +17,3 @@ from app.domain.security_models import ApiKey, SecurityAuditLog  # noqa: F401
 from app.domain.profile_model import PerfilUsuario  # noqa: F401
 from app.models.pago import Pago  # noqa: F401
 from app.models.factura import Factura  # noqa: F401
-
-# In-memory SQLite shared across threads for temporary data
-DATABASE_URL = "sqlite://"
-
-engine = create_engine(
-    DATABASE_URL,
-    connect_args={"check_same_thread": False},
-    poolclass=StaticPool,
-)
-
-SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
-
-
-def get_db() -> Session:
-    db = SessionLocal()
-    try:
-        yield db
-    finally:
-        db.close()
-
-
-def init_db(create_all: bool = True):
-    if create_all:
-        Base.metadata.create_all(bind=engine)
-
