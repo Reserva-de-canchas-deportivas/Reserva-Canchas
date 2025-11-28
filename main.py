@@ -21,6 +21,9 @@ from app.soap.soap_config import get_soap_info, setup_soap_services
 from app.services.reserva_service import ReservaService
 from app.repository.user_repository import seed_users
 
+from fastapi import FastAPI
+from app.config.routers import include_routers
+
 request_id_ctx_var: ContextVar[str] = ContextVar("request_id", default="-")
 start_time = time.time()
 
@@ -268,3 +271,43 @@ def _cli(argv: list[str]) -> None:  # pragma: no cover
 
 if __name__ == "__main__":
     _cli(sys.argv[1:])  # pragma: no cover
+
+
+
+
+app = FastAPI(title="Sistema de Reservas", version="1.0.0")
+
+# Incluir routers
+include_routers(app)
+
+@app.get("/")
+def read_root():
+    return {"message": "Sistema de Reservas de Canchas"}
+
+if __name__ == "__main__":
+    import uvicorn
+    uvicorn.run(app, host="0.0.0.0", port=8000)
+
+from fastapi import FastAPI
+from app.config.routers import include_routers
+
+app = FastAPI(
+    title="Sistema de Reservas de Canchas",
+    description="API para gestión de reservas con workflow de estados",
+    version="1.0.0"
+)
+
+# Incluir routers
+include_routers(app)
+
+@app.get("/")
+def read_root():
+    return {"message": "Sistema de Reservas de Canchas - Workflow de Estados"}
+
+@app.get("/health")
+def health_check():
+    return {"status": "healthy", "service": "reservas"}
+
+if __name__ == "__main__":
+    import uvicorn
+    uvicorn.run(app, host="0.0.0.0", port=8000)
