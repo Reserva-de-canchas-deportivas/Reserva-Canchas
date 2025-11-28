@@ -42,6 +42,30 @@ from app.routers import (
     reserva_router, pago_router, user_router, sede_router
 )
 
+from fastapi import FastAPI, Depends
+from prometheus_fastapi_instrumentator import Instrumentator
+
+# Importar middlewares
+from app.middleware.metrics_middleware import MetricsMiddleware
+from app.middleware.telemetry_middleware import TelemetryMiddleware
+
+# Importar servicios
+from app.services.metrics_service import metrics_service
+from app.services.telemetry_service import telemetry_service
+
+# OpenTelemetry
+from opentelemetry.instrumentation.fastapi import FastAPIInstrumentor
+from opentelemetry.instrumentation.requests import RequestsInstrumentor
+import os
+
+# Importar routers existentes
+from app.routers import (
+    auth_router, cancha_router, disponibilidad_router,
+    reserva_router, pago_router, user_router, sede_router
+)
+
+from opentelemetry.instrumentation.fastapi import FastAPIInstrumentor
+FastAPIInstrumentor().instrument_app(app)
 
 request_id_ctx_var: ContextVar[str] = ContextVar("request_id", default="-")
 start_time = time.time()
@@ -460,6 +484,90 @@ async def startup_event():
     print("📊 Endpoint de métricas disponible en: /metrics")
     print("❤️  Health check disponible en: /health")
     print("🔧 Estado del sistema disponible en: /system/status")
+
+if __name__ == "__main__":
+    import uvicorn
+    uvicorn.run(app, host="0.0.0.0", port=8000)
+
+
+
+app = FastAPI(title="Sistema de Reservas", version="1.0.0")
+
+# Aplicar middlewares
+app.add_middleware(MetricsMiddleware)
+app.add_middleware(TelemetryMiddleware)
+
+# Configurar instrumentador de Prometheus
+instrumentator = Instrumentator(
+    should_group_status_codes=False,
+    should_ignore_untemplated=True,
+    should_respect_env_var=True,
+    should_instrument_requests_inprogress=True,
+    excluded_handlers=[".*admin.*", "/metrics"],
+    inprogress_name="http_requests_inprogress",
+    inprogress_labels=True,
+)
+
+# Instrumentar la aplicación
+instrumentator.instrument(app).expose(app)
+
+# Registrar routers existentes
+app.include_router(auth_router.router, prefix="/api/v1", tags=["auth"])
+app.include_router(cancha_router.router, prefix="/api/v1", tags=["canchas"])
+app.include_router(disponibilidad_router.router, prefix="/api/v1", tags=["disponibilidad"])
+app.include_router(reserva_router.router, prefix="/api/v1", tags=["reservas"])
+app.include_router(pago_router.router, prefix="/api/v1", tags=["pagos"])
+app.include_router(user_router.router, prefix="/api/v1", tags=["usuarios"])
+app.include_router(sede_router.router, prefix="/api/v1", tags=["sedes"])
+
+# Nuevo router para telemetría
+from app.routers import telemetria_router
+app.include_router(telemetria_router.router, prefix="/api/v1", tags=["telemetria"])
+
+# Endpoint de health check mejorado
+@app.get("/health")
+async def health_check():
+    """Endpoint de health check para monitoreo"""
+    from opentelemetry import trace
+    import asyncio
+    
+    current_span = trace.get_current_span()
+    trace_info = {}
+    if current_span:
+        span_context = current_span.get_span_context()
+        trace_info = {
+            "trace_id": format(span_context.trace_id, '032x'),
+            "span_id": format(span_context.span_id, '016x')
+        }
+    
+    return {
+        "status": "healthy",
+        "timestamp": asyncio.get_event_loop().time(),
+        "service": "reservas-api",
+        "metrics_ready": True,
+        "tracing_ready": True,
+        "trace_context": trace_info
+    }
+
+@app.on_event("startup")
+async def startup_event():
+    """Evento de inicio de la aplicación"""
+    # Inicializar métricas
+    metrics_service.establecer_reservas_activas(0)
+    metrics_service.establecer_pagos_pendientes(0)
+    
+    # Instrumentar FastAPI con OpenTelemetry
+    try:
+        FastAPIInstrumentor().instrument_app(app)
+        RequestsInstrumentor().instrument()
+        print("✅ OpenTelemetry instrumentado correctamente")
+    except Exception as e:
+        print(f"⚠️  Advertencia OpenTelemetry: {e}")
+    
+    print("✅ Sistema de métricas y tracing inicializado")
+    print("📊 Métricas disponibles en: /metrics")
+    print("🔍 Tracing disponible en: OTEL Collector")
+    print("❤️  Health check en: /health")
 
 if __name__ == "__main__":
     import uvicorn
