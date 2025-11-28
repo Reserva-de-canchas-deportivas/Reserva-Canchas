@@ -1,8 +1,8 @@
-from fastapi import Request, Response
+﻿from fastapi import Request
 from prometheus_client import Counter, Histogram
+from starlette.middleware.base import BaseHTTPMiddleware
 import time
 
-# Métricas HTTP básicas
 HTTP_REQUESTS = Counter(
     'http_requests_total',
     'Total HTTP requests',
@@ -15,20 +15,21 @@ HTTP_REQUEST_DURATION = Histogram(
     ['method', 'endpoint']
 )
 
-class MetricsMiddleware:
+
+class MetricsMiddleware(BaseHTTPMiddleware):
     def __init__(self, app):
-        self.app = app
-    
-    async def __call__(self, request: Request, call_next):
+        super().__init__(app)
+
+    async def dispatch(self, request: Request, call_next):
         start_time = time.time()
-        
+
         # Excluir endpoints de métricas y health de las métricas
         if request.url.path in ['/metrics', '/health']:
             return await call_next(request)
-        
+
         method = request.method
         endpoint = request.url.path
-        
+
         try:
             response = await call_next(request)
             status_code = response.status_code
@@ -37,17 +38,16 @@ class MetricsMiddleware:
             raise e
         finally:
             duration = time.time() - start_time
-            
-            # Registrar métricas
+
             HTTP_REQUESTS.labels(
                 method=method,
                 endpoint=endpoint,
                 status_code=status_code
             ).inc()
-            
+
             HTTP_REQUEST_DURATION.labels(
                 method=method,
                 endpoint=endpoint
             ).observe(duration)
-        
+
         return response
