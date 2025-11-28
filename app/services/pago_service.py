@@ -4,6 +4,9 @@ from app.repository.pago_repository import PagoRepository
 from app.models.pago import EstadoPago
 from app.models.reserva import Reserva
 
+from app.services.metrics_service import metrics_service, MetricsService
+from typing import List, Optional
+
 class PagoService:
     def __init__(self, db: Session):
         self.db = db
@@ -110,3 +113,61 @@ class PagoService:
                 "fecha_actualizacion": pago.fecha_actualizacion.isoformat()
             }
         return None
+    
+    
+
+
+# Simulación de datos temporales
+pagos_temp = []
+
+class PagoService:
+    
+    @MetricsService.medir_tiempo_reserva("procesar_pago")
+    async def crear_pago(self, pago_data: dict):
+        """Crear un nuevo pago con métricas"""
+        try:
+            pago_id = len(pagos_temp) + 1
+            pago = {**pago_data, "id": pago_id, "estado": "pendiente"}
+            pagos_temp.append(pago)
+            
+            # Actualizar métricas
+            metrics_service.incrementar_pagos_pendientes()
+            metrics_service.contar_pago_procesado("pendiente")
+            
+            return pago
+            
+        except Exception as e:
+            metrics_service.contar_pago_procesado("error")
+            raise e
+    
+    async def procesar_pago(self, pago_id: int, estado: str):
+        """Procesar un pago existente"""
+        try:
+            for pago in pagos_temp:
+                if pago["id"] == pago_id:
+                    pago_anterior = pago["estado"]
+                    pago["estado"] = estado
+                    
+                    # Actualizar métricas
+                    if estado == "completado" and pago_anterior == "pendiente":
+                        metrics_service.decrementar_pagos_pendientes()
+                    
+                    metrics_service.contar_pago_procesado(estado)
+                    return pago
+            return None
+            
+        except Exception as e:
+            metrics_service.contar_pago_procesado("error_procesamiento")
+            raise e
+    
+    async def obtener_pagos_pendientes(self) -> List[dict]:
+        """Obtener pagos pendientes y actualizar métricas"""
+        pendientes = [p for p in pagos_temp if p.get("estado") == "pendiente"]
+        
+        # Sincronizar métrica con realidad
+        metrics_service.establecer_pagos_pendientes(len(pendientes))
+        
+        return pendientes
+
+# Instancia global del servicio
+pago_service = PagoService()

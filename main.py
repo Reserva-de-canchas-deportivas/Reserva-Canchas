@@ -30,6 +30,18 @@ from typing import Any, Dict, Optional
 from fastapi import Request
 from app.routers.example_router import router as example_router
 
+from fastapi import FastAPI, Depends
+from prometheus_fastapi_instrumentator import Instrumentator
+from app.middleware.metrics_middleware import MetricsMiddleware
+from app.services.metrics_service import metrics_service
+import asyncio
+
+# Importar tus routers existentes
+from app.routers import (
+    auth_router, cancha_router, disponibilidad_router,
+    reserva_router, pago_router, user_router, sede_router
+)
+
 
 request_id_ctx_var: ContextVar[str] = ContextVar("request_id", default="-")
 start_time = time.time()
@@ -364,3 +376,91 @@ def setup_structlog():
     )
 
     app.include_router(example_router)
+
+
+
+app = FastAPI(title="Sistema de Reservas", version="1.0.0")
+
+# Aplicar middleware de métricas
+app.add_middleware(MetricsMiddleware)
+
+# Configurar instrumentador de Prometheus
+instrumentator = Instrumentator(
+    should_group_status_codes=False,
+    should_ignore_untemplated=True,
+    should_respect_env_var=True,
+    should_instrument_requests_inprogress=True,
+    excluded_handlers=[".*admin.*", "/metrics"],
+    inprogress_name="http_requests_inprogress",
+    inprogress_labels=True,
+)
+
+# Instrumentar la aplicación
+instrumentator.instrument(app).expose(app)
+
+# Registrar routers existentes
+app.include_router(auth_router.router, prefix="/api/v1", tags=["auth"])
+app.include_router(cancha_router.router, prefix="/api/v1", tags=["canchas"])
+app.include_router(disponibilidad_router.router, prefix="/api/v1", tags=["disponibilidad"])
+app.include_router(reserva_router.router, prefix="/api/v1", tags=["reservas"])
+app.include_router(pago_router.router, prefix="/api/v1", tags=["pagos"])
+app.include_router(user_router.router, prefix="/api/v1", tags=["usuarios"])
+app.include_router(sede_router.router, prefix="/api/v1", tags=["sedes"])
+
+# Endpoint de health check
+@app.get("/health")
+async def health_check():
+    """Endpoint de health check para monitoreo"""
+    return {
+        "status": "healthy",
+        "timestamp": asyncio.get_event_loop().time(),
+        "service": "reservas-api",
+        "metrics_ready": True
+    }
+
+# Endpoint de estado del sistema con métricas básicas
+@app.get("/system/status")
+async def system_status():
+    """Endpoint que muestra el estado del sistema con métricas"""
+    from prometheus_client import generate_latest, REGISTRY
+    
+    metrics_data = generate_latest(REGISTRY).decode('utf-8')
+    
+    # Extraer algunas métricas clave para mostrar
+    reservas_activas = 0
+    pagos_pendientes = 0
+    
+    for line in metrics_data.split('\n'):
+        if 'reservas_activas_total' in line and not line.startswith('#'):
+            try:
+                reservas_activas = float(line.split()[-1])
+            except:
+                pass
+        elif 'pagos_pendientes_total' in line and not line.startswith('#'):
+            try:
+                pagos_pendientes = float(line.split()[-1])
+            except:
+                pass
+    
+    return {
+        "status": "operational",
+        "reservas_activas": reservas_activas,
+        "pagos_pendientes": pagos_pendientes,
+        "metrics_endpoint": "/metrics",
+        "health_endpoint": "/health"
+    }
+
+@app.on_event("startup")
+async def startup_event():
+    """Evento de inicio de la aplicación"""
+    # Inicializar métricas si es necesario
+    metrics_service.establecer_reservas_activas(0)
+    metrics_service.establecer_pagos_pendientes(0)
+    print("✅ Métricas Prometheus inicializadas correctamente")
+    print("📊 Endpoint de métricas disponible en: /metrics")
+    print("❤️  Health check disponible en: /health")
+    print("🔧 Estado del sistema disponible en: /system/status")
+
+if __name__ == "__main__":
+    import uvicorn
+    uvicorn.run(app, host="0.0.0.0", port=8000)

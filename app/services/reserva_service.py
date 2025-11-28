@@ -33,6 +33,10 @@ from app.domain.reserva_fsm import ReservaFSM, EstadoReserva, TransicionInvalida
 from app.repository.reserva_historial_repository import ReservaHistorialRepository
 from app.schemas.reserva_historial import ReservaHistorialCreate
 
+from app.services.metrics_service import metrics_service, MetricsService
+from typing import List, Optional
+import time
+
 
 class ReservaService:
     ESTADOS_ACTIVOS = ("hold", "pending", "confirmed")
@@ -684,3 +688,61 @@ class ReservaEstadoService:
     
     def _obtener_reserva(self, reserva_id: str):
         return self.db.query(Reserva).filter(Reserva.id == reserva_id).first()
+    
+
+
+# Simulación de datos temporales (reemplaza con tu implementación actual)
+reservas_temp = []
+pagos_temp = []
+
+class ReservaService:
+    
+    @MetricsService.medir_tiempo_reserva("crear_reserva")
+    async def crear_reserva(self, reserva_data: dict):
+        """Crear una nueva reserva con métricas"""
+        try:
+            # Simular creación de reserva
+            reserva_id = len(reservas_temp) + 1
+            reserva = {**reserva_data, "id": reserva_id, "estado": "confirmada"}
+            reservas_temp.append(reserva)
+            
+            # Actualizar métricas
+            metrics_service.incrementar_reservas_activas()
+            metrics_service.contar_reserva_creada("confirmada")
+            
+            return reserva
+            
+        except Exception as e:
+            metrics_service.contar_reserva_creada("error")
+            raise e
+    
+    async def cancelar_reserva(self, reserva_id: int):
+        """Cancelar una reserva existente"""
+        try:
+            # Simular cancelación
+            for reserva in reservas_temp:
+                if reserva["id"] == reserva_id:
+                    reserva["estado"] = "cancelada"
+                    
+                    # Actualizar métricas
+                    metrics_service.decrementar_reservas_activas()
+                    metrics_service.contar_reserva_creada("cancelada")
+                    
+                    return reserva
+            return None
+            
+        except Exception as e:
+            metrics_service.contar_reserva_creada("error_cancelacion")
+            raise e
+    
+    async def obtener_reservas_activas(self) -> List[dict]:
+        """Obtener reservas activas y actualizar métricas"""
+        activas = [r for r in reservas_temp if r.get("estado") == "confirmada"]
+        
+        # Sincronizar métrica con realidad
+        metrics_service.establecer_reservas_activas(len(activas))
+        
+        return activas
+
+# Instancia global del servicio
+reserva_service = ReservaService()

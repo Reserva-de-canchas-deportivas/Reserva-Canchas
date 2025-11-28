@@ -34,3 +34,7 @@ prometheus-fastapi-instrumentator>=6.1.0
 opentelemetry-sdk>=1.26.0
 opentelemetry-instrumentation-fastapi>=0.51b0
 opentelemetry-exporter-otlp>=1.26.0
+
+#HU-32 
+prometheus-fastapi-instrumentator==3.4.0
+prometheus-client==0.21.0
