@@ -1,4 +1,3 @@
-import os
 from opentelemetry import trace
 from opentelemetry.sdk.trace import TracerProvider
 from opentelemetry.sdk.trace.export import BatchSpanProcessor, ConsoleSpanExporter
@@ -31,7 +30,7 @@ class TelemetryService:
             # Establecer como proveedor global
             trace.set_tracer_provider(self.tracer_provider)
             
-        except Exception as e:
+        except Exception:
             # Fallback seguro para pruebas
             self.tracer_provider = TracerProvider()
             trace.set_tracer_provider(self.tracer_provider)

@@ -1,6 +1,5 @@
 import logging
 import structlog
-from typing import Any, Dict, Optional
 from fastapi import Request
 
 def get_logger(name: str = "app") -> logging.Logger:

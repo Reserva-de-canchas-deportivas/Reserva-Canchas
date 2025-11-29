@@ -18,7 +18,7 @@ from app.schemas.reserva import (
 from app.services.reserva_service import ReservaService
 from app.services.rbac import require_role_dependency
 
-from app.domain.reserva_fsm import EstadoReserva, TransicionRequest, TransicionResponse
+from app.domain.reserva_fsm import TransicionRequest, TransicionResponse
 from app.schemas.reserva_historial import ReservaHistorialResponse
 from app.services.reserva_service import ReservaEstadoService
 

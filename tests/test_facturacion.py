@@ -2,7 +2,7 @@ import pytest
 import sys
 import os
 from uuid import uuid4
-from unittest.mock import Mock, patch
+from unittest.mock import Mock
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
 

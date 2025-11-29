@@ -4,9 +4,6 @@ from app.repository.pago_repository import PagoRepository
 from app.models.pago import EstadoPago
 from app.models.reserva import Reserva
 
-from app.services.metrics_service import metrics_service, MetricsService
-from typing import List, Optional
-
 class PagoService:
     def __init__(self, db: Session):
         self.db = db
