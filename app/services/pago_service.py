@@ -4,8 +4,6 @@ from app.repository.pago_repository import PagoRepository
 from app.models.pago import EstadoPago
 from app.models.reserva import Reserva
 
-from typing import Optional
-
 class PagoService:
     def __init__(self, db: Session):
         self.db = db

@@ -1,6 +1,5 @@
 import pytest
 import logging
-import uuid
 from unittest.mock import Mock, patch
 from fastapi import Request
 from starlette.datastructures import Headers
