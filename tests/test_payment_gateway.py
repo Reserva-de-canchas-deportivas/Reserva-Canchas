@@ -1,10 +1,8 @@
 import pytest
-import asyncio
 import sys
 import os
 from uuid import uuid4
 from unittest.mock import Mock, AsyncMock, patch
-from datetime import datetime
 
 # Agregar el directorio app al path para que pytest pueda importar
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))

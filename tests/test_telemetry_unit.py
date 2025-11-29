@@ -4,7 +4,6 @@ Pruebas unitarias COMPLETAS para OpenTelemetry - SIN EJECUTAR APP
 """
 import pytest
 from opentelemetry import trace
-from opentelemetry.sdk.trace import TracerProvider
 
 # Importar servicio
 from app.services.telemetry_service import telemetry_service, TelemetryService

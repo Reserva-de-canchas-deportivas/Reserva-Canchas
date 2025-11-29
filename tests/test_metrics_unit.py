@@ -7,7 +7,7 @@ import time
 from prometheus_client import generate_latest, REGISTRY, CollectorRegistry
 
 # Importar servicios simulados (sin dependencias)
-from app.services.metrics_service import metrics_service, MetricsService
+from app.services.metrics_service import metrics_service
 from app.services.simulated_services import simulated_reserva_service, simulated_pago_service
 
 # Crear un registry limpio para pruebas
@@ -28,9 +28,6 @@ class TestMetricsServiceUnit:
     
     def test_incrementar_reservas_activas(self):
         """Test: Incrementar reservas activas afecta la métrica"""
-        # Valor inicial
-        metrics_initial = generate_latest(REGISTRY).decode('utf-8')
-        
         # Acción: incrementar
         metrics_service.incrementar_reservas_activas()
         metrics_service.incrementar_reservas_activas()
