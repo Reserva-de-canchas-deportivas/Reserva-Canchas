@@ -162,8 +162,6 @@ class TestTelemetryEdgeCases:
     
     def test_concurrent_tracer_usage(self):
         """Test: Uso concurrente del tracer (simulado)"""
-        from opentelemetry import trace
-        
         tracer = telemetry_service.get_tracer("concurrent-test")
         
         # Simular operaciones "concurrentes" (en serie para pruebas unitarias)

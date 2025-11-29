@@ -6,43 +6,43 @@ class TestReservaFSM:
     
     def test_transiciones_validas_hold(self):
         """Test transiciones válidas desde HOLD"""
-        assert ReservaFSM.es_transicion_valida(EstadoReserva.HOLD, EstadoReserva.PENDING) == True
-        assert ReservaFSM.es_transicion_valida(EstadoReserva.HOLD, EstadoReserva.EXPIRADA) == True
+        assert ReservaFSM.es_transicion_valida(EstadoReserva.HOLD, EstadoReserva.PENDING)
+        assert ReservaFSM.es_transicion_valida(EstadoReserva.HOLD, EstadoReserva.EXPIRADA)
         
     def test_transiciones_invalidas_hold(self):
         """Test transiciones inválidas desde HOLD"""
-        assert ReservaFSM.es_transicion_valida(EstadoReserva.HOLD, EstadoReserva.CONFIRMED) == False
-        assert ReservaFSM.es_transicion_valida(EstadoReserva.HOLD, EstadoReserva.CANCELLED) == False
-        assert ReservaFSM.es_transicion_valida(EstadoReserva.HOLD, EstadoReserva.NO_SHOW) == False
+        assert not ReservaFSM.es_transicion_valida(EstadoReserva.HOLD, EstadoReserva.CONFIRMED)
+        assert not ReservaFSM.es_transicion_valida(EstadoReserva.HOLD, EstadoReserva.CANCELLED)
+        assert not ReservaFSM.es_transicion_valida(EstadoReserva.HOLD, EstadoReserva.NO_SHOW)
         
     def test_transiciones_validas_pending(self):
         """Test transiciones válidas desde PENDING"""
-        assert ReservaFSM.es_transicion_valida(EstadoReserva.PENDING, EstadoReserva.CONFIRMED) == True
+        assert ReservaFSM.es_transicion_valida(EstadoReserva.PENDING, EstadoReserva.CONFIRMED)
         
     def test_transiciones_invalidas_pending(self):
         """Test transiciones inválidas desde PENDING"""
-        assert ReservaFSM.es_transicion_valida(EstadoReserva.PENDING, EstadoReserva.HOLD) == False
-        assert ReservaFSM.es_transicion_valida(EstadoReserva.PENDING, EstadoReserva.CANCELLED) == False
-        assert ReservaFSM.es_transicion_valida(EstadoReserva.PENDING, EstadoReserva.NO_SHOW) == False
-        assert ReservaFSM.es_transicion_valida(EstadoReserva.PENDING, EstadoReserva.EXPIRADA) == False
+        assert not ReservaFSM.es_transicion_valida(EstadoReserva.PENDING, EstadoReserva.HOLD)
+        assert not ReservaFSM.es_transicion_valida(EstadoReserva.PENDING, EstadoReserva.CANCELLED)
+        assert not ReservaFSM.es_transicion_valida(EstadoReserva.PENDING, EstadoReserva.NO_SHOW)
+        assert not ReservaFSM.es_transicion_valida(EstadoReserva.PENDING, EstadoReserva.EXPIRADA)
         
     def test_transiciones_validas_confirmed(self):
         """Test transiciones válidas desde CONFIRMED"""
-        assert ReservaFSM.es_transicion_valida(EstadoReserva.CONFIRMED, EstadoReserva.CANCELLED) == True
-        assert ReservaFSM.es_transicion_valida(EstadoReserva.CONFIRMED, EstadoReserva.NO_SHOW) == True
+        assert ReservaFSM.es_transicion_valida(EstadoReserva.CONFIRMED, EstadoReserva.CANCELLED)
+        assert ReservaFSM.es_transicion_valida(EstadoReserva.CONFIRMED, EstadoReserva.NO_SHOW)
         
     def test_transiciones_invalidas_confirmed(self):
         """Test transiciones inválidas desde CONFIRMED"""
-        assert ReservaFSM.es_transicion_valida(EstadoReserva.CONFIRMED, EstadoReserva.HOLD) == False
-        assert ReservaFSM.es_transicion_valida(EstadoReserva.CONFIRMED, EstadoReserva.PENDING) == False
-        assert ReservaFSM.es_transicion_valida(EstadoReserva.CONFIRMED, EstadoReserva.EXPIRADA) == False
+        assert not ReservaFSM.es_transicion_valida(EstadoReserva.CONFIRMED, EstadoReserva.HOLD)
+        assert not ReservaFSM.es_transicion_valida(EstadoReserva.CONFIRMED, EstadoReserva.PENDING)
+        assert not ReservaFSM.es_transicion_valida(EstadoReserva.CONFIRMED, EstadoReserva.EXPIRADA)
         
     def test_estados_finales(self):
         """Test que estados finales no permiten transiciones"""
         estados_finales = [EstadoReserva.CANCELLED, EstadoReserva.NO_SHOW, EstadoReserva.EXPIRADA]
         for estado_final in estados_finales:
             for estado in EstadoReserva:
-                assert ReservaFSM.es_transicion_valida(estado_final, estado) == False
+                assert not ReservaFSM.es_transicion_valida(estado_final, estado)
                 
     def test_validar_transicion_valida(self):
         """Test que validar_transicion no lanza excepción para transición válida"""
