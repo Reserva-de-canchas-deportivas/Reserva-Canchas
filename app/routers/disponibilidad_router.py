@@ -3,7 +3,7 @@ Router de Disponibilidad - Endpoint API
 Consulta de disponibilidad de canchas
 """
 
-from fastapi import APIRouter, Depends, Query
+from fastapi import APIRouter, Depends, Query, HTTPException
 from sqlalchemy.orm import Session
 import logging
 import sys

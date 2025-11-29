@@ -1,7 +1,6 @@
 from sqlalchemy.orm import Session
 from typing import List, Optional
 from app.models.pago import Pago, EstadoPago
-from sqlalchemy.exc import IntegrityError
 
 class PagoRepository:
     def __init__(self, db: Session):

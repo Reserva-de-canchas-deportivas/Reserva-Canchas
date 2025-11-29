@@ -1,6 +1,5 @@
 from sqlalchemy import Column, String, Numeric, DateTime, ForeignKey, CheckConstraint
 from sqlalchemy.sql import func
-from sqlalchemy.orm import relationship
 import uuid
 from enum import Enum
 from app.domain.user_model import Base

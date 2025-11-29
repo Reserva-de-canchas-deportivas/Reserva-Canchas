@@ -1,7 +1,6 @@
 from enum import Enum
 from datetime import datetime
-from uuid import uuid4, UUID
-from typing import Optional
+from uuid import uuid4
 
 
 class EstadoReserva(str, Enum):

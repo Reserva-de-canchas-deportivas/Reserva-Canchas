@@ -33,10 +33,6 @@ from app.domain.reserva_fsm import ReservaFSM, EstadoReserva, TransicionInvalida
 from app.repository.reserva_historial_repository import ReservaHistorialRepository
 from app.schemas.reserva_historial import ReservaHistorialCreate
 
-from app.services.metrics_service import metrics_service, MetricsService
-from typing import List, Optional
-import time
-
 
 class ReservaService:
     ESTADOS_ACTIVOS = ("hold", "pending", "confirmed")

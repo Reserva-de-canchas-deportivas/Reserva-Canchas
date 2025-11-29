@@ -1,7 +1,6 @@
 import logging
 import logging.config
 import sys
-from typing import Any, Dict
 
 def setup_logging() -> None:
     """Configura el logging estructurado para la aplicación"""

@@ -1,6 +1,5 @@
 from fastapi import APIRouter, HTTPException, status
 from opentelemetry import trace
-import time
 import random
 import asyncio
 

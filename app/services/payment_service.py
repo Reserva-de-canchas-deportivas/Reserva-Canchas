@@ -1,5 +1,5 @@
 from app.payment_gateway.simulated_gateway import SimulatedGateway
-from app.invoices.invoice_service import InvoiceService, InvoiceData
+from app.invoices.invoice_service import InvoiceService
 from app.schemas.payment_gateway import PaymentProcessingResponse
 from datetime import datetime
 
@@ -111,7 +111,7 @@ class PaymentProcessingService:
                         nuevo_estado="fallido",
                         metadata={"error": str(e)}
                     )
-                except:
+                except Exception:
                     pass  # Si falla el update, continuar
             
             return PaymentProcessingResponse(
