@@ -1,4 +1,154 @@
 # Reserva-Canchas
+
+## Seguridad Transversal (HU-006)
+
+Esta versión incorpora autenticación JWT RS256, control de acceso por roles y API Keys obligatorias para integraciones externas.
+
+- **JWT RS256**: los tokens se firman con la clave privada ubicada en `keys/private.pem` (o variables `PRIVATE_KEY/ PUBLIC_KEY`). La verificación usa la clave pública y se valida `exp`, `jti` y `type` (`access`/`refresh`).
+- **Roles**: se soportan los roles `cliente`, `personal` y `admin`. Los endpoints marcan sus permisos con el decorador `@require_role(...)`. Ejemplos:
+  - `/api/v1/usuarios/perfil` ⇒ solo `admin`.
+  - CRUD de sedes/canchas/tarifario ⇒ `admin`/`personal` (consultas admiten todos los roles).
+  - `/api/v1/disponibilidad` ⇒ todos los roles autenticados.
+- **API Keys**: las rutas SOAP (`/soap/*`) exigen `X-Api-Key`. Se siembra una llave demo `DEMO-INTEGRACION-2024-KEY` (hash persistido en BD). Cada intento exitoso y fallido queda registrado en `security_audit_logs`.
+- **Auditoría**: cualquier validación (tokens, roles, API Keys) genera eventos en la tabla `security_audit_logs` con ip, agente y motivo.
+- **Usuarios semilla**:
+  - `admin@example.com` / `admin123` (rol `admin`)
+  - `blocked@example.com` / `blocked123` (rol `cliente`, estado `bloqueado`)
+
+### Casos de prueba sugeridos
+1. Token válido ⇒ acceder a `/api/v1/usuarios/perfil` con `Authorization: Bearer <token>` desde login del admin. Debe responder 200 con el rol.
+2. Token expirado ⇒ manipular `exp` (o esperar) y reintentar ⇒ 401 `TOKEN_EXPIRED`.
+3. Usuario sin rol requerido ⇒ iniciar sesión con un `cliente` activo (crear mediante seed o repositorio) y llamar `/api/v1/usuarios/perfil` ⇒ 403 `FORBIDDEN`.
+4. API Key inexistente ⇒ llamar algún `/soap/*` sin `X-Api-Key` o con valor aleatorio ⇒ 401 `INVALID_API_KEY`.
+5. Token manipulado ⇒ alterar un caracter del JWT ⇒ 401 `SIGNATURE_INVALID`.
+
+La respuesta estándar de error para seguridad es:
+
+```json
+{
+  "error": {
+    "code": "UNAUTHORIZED",
+    "message": "Token inválido o ausente"
+  }
+}
+```
+
+# Resolución de Precio (HU-017)
+
+- **Endpoint:** `GET /api/v1/tarifario/resolver?fecha=YYYY-MM-DD&hora_inicio=HH:MM&hora_fin=HH:MM&sede_id=...&cancha_id?=...`
+- **Lógica:** se normaliza la fecha/hora con la zona horaria de la sede, se intenta primero la tarifa específica de la cancha y, si no existe, la general de la sede. Si no hay ninguna, se retorna `404 SIN_TARIFA`.
+- **Cache:** las respuestas se almacenan en memoria por 5 minutos (TTL configurable en código) para evitar recalcular precios repetidos.
+- **Respuesta exitosa:**
+  ```json
+  {
+    "mensaje": "Tarifa resuelta",
+    "data": {
+      "origen": "cancha",
+      "tarifa_id": "uuid",
+      "moneda": "COP",
+      "precio_por_bloque": 150000
+    },
+    "success": true
+  }
+  ```
+- **Errores controlados:**
+  - `404 SIN_TARIFA` → no existe tarifa aplicable (detalles incluyen día/hora).
+  - `500 ZONA_HORARIA_INVALIDA` → la sede tiene TZ inválida.
+  - `422 VALIDATION_ERROR` → fecha/hora con formato incorrecto (los parámetros requeridos ya son validados por FastAPI si faltan).
+
+### Casos de prueba HU-017
+1. **Tarifa de cancha:** enviar `cancha_id` con una tarifa específica → `origen="cancha"`.
+2. **Tarifa de sede:** omitir `cancha_id` o usar una sin tarifa → `origen="sede"`.
+3. **Sin tarifa:** usar horario fuera de franjas -> 404 con `SIN_TARIFA`.
+4. **Zona horaria inválida:** configura `sede.zona_horaria` a un valor erróneo y consulta → 500 controlado.
+5. **Validación:** omite parámetros obligatorios → FastAPI responde 422.
+
+# Pre-reserva HOLD (HU-019)
+
+```
+POST /api/v1/reservas
+Authorization: Bearer <token cliente/personal/admin>
+{
+  "sede_id": "...",
+  "cancha_id": "...",
+  "fecha": "2025-07-31",
+  "hora_inicio": "18:00",
+  "hora_fin": "19:00",
+  "clave_idempotencia": "HOLD-CLIENTE-123"
+}
+```
+
+- Calcula el precio reutilizando HU-017 y crea un registro en `estado="hold"` con `vence_hold = now + HOLD_TTL_MINUTES` (10 min por defecto).
+- Si se repite la misma `clave_idempotencia`, responde 200 con la misma `reserva_id` (idempotente).
+- Aplica validación de solape (hold/pending/confirmed + buffer), horario de apertura y estado de la cancha.
+- Respuestas de error clave: `RESERVA_SOLAPADA`, `FUERA_DE_APERTURA`, `CANCHA_NO_RESERVABLE`.
+
+# Confirmar Reserva (HU-020)
+
+```
+POST /api/v1/reservas/{reserva_id}/confirmar
+Authorization: Bearer <token cliente/personal/admin>
+{
+  "clave_idempotencia": "CONFIRM-123"  // opcional
+}
+```
+
+```powershell
+# Login
+$login = Invoke-RestMethod -Method Post `
+    -Uri http://localhost:8000/api/v1/auth/login `
+    -Body '{"correo":"admin@example.com","contrasena":"admin123"}' `
+    -ContentType "application/json"
+$headers = @{ Authorization = "Bearer $($login.data.access_token)" }
+
+# IDs demo
+$sedes = Invoke-RestMethod -Method Get -Uri http://localhost:8000/api/v1/sedes/ -Headers $headers
+$sedeId = $sedes.data.sedes[0].sede_id
+$canchas = Invoke-RestMethod -Method Get -Uri "http://localhost:8000/api/v1/sedes/$sedeId/canchas/" -Headers $headers
+$canchaId = $canchas.data.canchas[0].cancha_id
+
+# Crear HOLD (>24h)
+$holdBody = @{
+    sede_id = $sedeId
+    cancha_id = $canchaId
+    fecha = "2025-07-31"
+    hora_inicio = "18:00"
+    hora_fin = "19:00"
+    clave_idempotencia = "HOLD-001"
+} | ConvertTo-Json -Compress
+$holdResponse = Invoke-RestMethod -Method Post `
+    -Uri http://localhost:8000/api/v1/reservas `
+    -Headers $headers -ContentType "application/json" `
+    -Body $holdBody
+$reservaId = $holdResponse.data.reserva_id
+
+# Confirmar
+Invoke-RestMethod -Method Post `
+    -Uri "http://localhost:8000/api/v1/reservas/$reservaId/confirmar" `
+    -Headers $headers -ContentType "application/json" `
+    -Body '{ "clave_idempotencia": "CONFIRM-001" }'
+
+# Cancelar e idempotencia
+$cancelBody = @{
+    motivo = "Cliente no asistirá"
+    clave_idempotencia = "CANCEL-001"
+} | ConvertTo-Json -Compress
+Invoke-RestMethod -Method Post `
+    -Uri "http://localhost:8000/api/v1/reservas/$reservaId/cancelar" `
+    -Headers $headers -ContentType "application/json" `
+    -Body $cancelBody
+Invoke-RestMethod -Method Post `
+    -Uri "http://localhost:8000/api/v1/reservas/$reservaId/cancelar" `
+    -Headers $headers -ContentType "application/json" `
+    -Body $cancelBody
+
+# Alternativa sin body JSON: ?motivo=...&clave_idempotencia=...
+Invoke-RestMethod -Method Post `
+    -Uri "http://localhost:8000/api/v1/reservas/$reservaId/cancelar?motivo=Cliente%20no%20asistira&clave_idempotencia=CANCEL-QUERY"` `
+    -Headers $headers
+```
+
+# Comandos GIT
 # Comandos GIT
 
 ### Conceptos Clave
